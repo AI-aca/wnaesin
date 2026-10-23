@@ -93,6 +93,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--mu
 .grid{display:grid;gap:16px}
 .g5{grid-template-columns:repeat(5,minmax(0,1fr))}
 .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.gsub{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
 .gsch{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
 .pick{position:relative;text-align:left;padding:24px 22px;border-radius:22px;background:var(--glass);border:1px solid var(--line);overflow:hidden;
   transition:transform .35s var(--ease),border-color .35s,background .35s;animation:rise .6s var(--ease) both}
@@ -336,8 +337,14 @@ tr.off td input[data-k="name"]{color:var(--muted)}
 
     <!-- 센터 관리 -->
     <div id="tAdmin" class="panel hidden">
-      <div class="ptitle"><h2 id="adTitle"></h2><span class="muted">학교 목록·선택 목록·보고서 이름·자료 가져오기는 이 센터에만 적용됩니다.</span></div>
+      <div class="ptitle"><h2 id="adTitle"></h2><span class="muted">과목·학교 활성 여부, 선택 목록, 보고서 이름, 자료 가져오기는 이 센터에만 적용됩니다.</span></div>
       <div class="admin-grid">
+        <div class="card" style="grid-column:1/-1">
+          <h3>과목 <small>활성으로 켠 과목만 과목 선택 화면에 나타납니다</small></h3>
+          <table class="list" id="adSubjects"></table>
+          <div class="row" style="margin-top:12px"><button id="btnSubjectAdd">+ 과목 추가</button><span class="spacer"></span><button class="primary" id="btnSubjectSave">과목 저장</button></div>
+          <p class="muted" style="font-size:12px;margin-top:8px">새 과목의 입력 형식: <b>단원·난이도형</b>(수학·과학처럼 단원·난이도·문항 내용) 또는 <b>출처·유형형</b>(영어처럼 출처·유형). 과목 이름과 형식은 저장한 뒤에는 바꿀 수 없고, 쓰지 않으면 비활성으로 두면 됩니다.</p>
+        </div>
         <div class="card">
           <h3>학교 목록</h3>
           <div style="max-height:520px;overflow:auto"><table class="list" id="adSchools"></table></div>
@@ -381,11 +388,13 @@ tr.off td input[data-k="name"]{color:var(--muted)}
 // ===== 설정 =====
 const DEFAULT_API = "https://xphtctpbysbbdyjaxidh.supabase.co/functions/v1/naesin";
 const API = new URLSearchParams(location.search).get("api") || DEFAULT_API;
-const SUBJECTS = ["수학","과학","영어"];
 const LEVELS = ["중","고"];
 const REGION_EN = { 송도:"SONGDO", 한강:"HANGANG", 청라:"CHEONGNA", 산본:"SANBON", 세종:"SEJONG" };
 const REGION_DESC = { 송도:"인천 송도국제도시", 한강:"김포 한강신도시", 청라:"인천 청라국제도시", 산본:"군포 산본신도시", 세종:"세종 · 연세" };
-const SUBJ_STYLE = { 수학:{ ic:"∑", bg:"linear-gradient(135deg,#a78bfa,#818cf8)", en:"MATHEMATICS" }, 과학:{ ic:"⚛", bg:"linear-gradient(135deg,#5eead4,#38bdf8)", en:"SCIENCE" }, 영어:{ ic:"A", bg:"linear-gradient(135deg,#fcd34d,#f59e0b)", en:"ENGLISH" } };
+const SUBJ_STYLE = { 수학:{ ic:"∑", bg:"linear-gradient(135deg,#a78bfa,#818cf8)", en:"MATHEMATICS" }, 과학:{ ic:"⚛", bg:"linear-gradient(135deg,#5eead4,#38bdf8)", en:"SCIENCE" }, 영어:{ ic:"A", bg:"linear-gradient(135deg,#fcd34d,#f59e0b)", en:"ENGLISH" },
+  국어:{ ic:"가", bg:"linear-gradient(135deg,#f9a8d4,#f472b6)", en:"KOREAN" }, 사회:{ ic:"◎", bg:"linear-gradient(135deg,#86efac,#22c55e)", en:"SOCIAL STUDIES" }, 역사:{ ic:"史", bg:"linear-gradient(135deg,#fdba74,#ea580c)", en:"HISTORY" } };
+const EXTRA_BG = ["linear-gradient(135deg,#93c5fd,#6366f1)","linear-gradient(135deg,#fca5a5,#ef4444)","linear-gradient(135deg,#c4b5fd,#a855f7)","linear-gradient(135deg,#67e8f9,#0891b2)"];
+function subjStyle(name, i=0){ return SUBJ_STYLE[name] || { ic:String(name || "?")[0], bg:EXTRA_BG[i % EXTRA_BG.length], en:"SUBJECT" }; }
 const KIND_LABEL = {form:"형태",source:"출처",qtype:"유형",unit:"단원",difficulty:"난이도",variant:"변형 유무"};
 const FIELD = {
   no:{label:"번호",cls:"w-no"}, form:{label:"형태",code:"form",cls:"w-sel"}, source:{label:"출처",code:"source",cls:"w-sel"},
@@ -395,12 +404,15 @@ const FIELD = {
 };
 const QF = ["no","form","source","qtype","unit","difficulty","variant","content","note"];
 const EXAMS4 = [[1,"중간"],[1,"기말"],[2,"중간"],[2,"기말"]];
+// 과목 형식: basic = 단원·난이도형(수학·과학 등), english = 출처·유형형(영어)
+function subjLayout(subject, region=S.region){ const x = S.subjects.find((s) => s.region === region && s.name === subject); return x ? x.layout : (subject === "영어" ? "english" : "basic"); }
+function regionSubjects(region=S.region, activeOnly=false){ return S.subjects.filter((s) => s.region === region && (!activeOnly || s.active)).map((s) => s.name); }
 function layout(subject, level){
-  if (subject === "영어") return level === "고" ? ["no","form","source","qtype","variant","note"] : ["no","form","source","qtype","difficulty","note"];
+  if (subjLayout(subject) === "english") return level === "고" ? ["no","form","source","qtype","variant","note"] : ["no","form","source","qtype","difficulty","note"];
   return ["no","form","qtype","unit","difficulty","content","note"];
 }
 function chartPlan(subject, level){
-  if (subject === "영어") {
+  if (subjLayout(subject) === "english") {
     const d = level === "고" ? "variant" : "difficulty";
     return [["form","doughnut"],["source","doughnut"],[d,"doughnut"],["qtype","doughnut"],["qtype","bar"],["source","bar"]];
   }
@@ -409,7 +421,7 @@ function chartPlan(subject, level){
 const PALETTE = ["#8b7cff","#45d4c8","#e6c27a","#f472b6","#60a5fa","#a3e635","#fb923c","#c084fc","#2dd4bf","#f87171","#94a3b8","#facc15","#34d399","#818cf8","#fda4af"];
 
 // ===== 상태 =====
-const S = { token:null, regions:[], schools:[], codes:[], years:[],
+const S = { token:null, regions:[], schools:[], codes:[], subjects:[], years:[],
   region:null, year:null, subject:null, level:"중", schoolId:null, grade:null,
   step:0, tab:"input", sem:null, term:null, exam:null, rows:[], dirty:false, examList:[], statYear:null, charts:[] };
 const store = {
@@ -483,6 +495,8 @@ $("btnLogout1").onclick = logout; $("btnLogout2").onclick = logout;
 async function afterLogin(){
   const r = await api("bootstrap");
   S.regions = r.regions; S.schools = r.schools; S.codes = r.codes; S.years = r.years;
+  // 서버가 아직 과목 기능 전 버전이면 기본 3과목으로 표시
+  S.subjects = r.subjects || S.regions.flatMap((g) => [["수학","basic",10],["과학","basic",20],["영어","english",30]].map(([name, layout, sort]) => ({ region:g.name, name, layout, sort, active:true })));
   const last = store.get("pick");
   if (last && S.regions.some((x) => x.name === last.region)) Object.assign(S, last);
   if (!S.year) S.year = currentSchoolYear();
@@ -522,9 +536,9 @@ function stepRegion(el){
 }
 function stepSubject(el){
   el.innerHTML = `<div class="qhead"><div class="eyebrow">STEP 02 · ${esc(S.region)}</div><h2><span class="gradtext">과목</span>을 선택하세요</h2></div>
-    <div class="grid g3">${SUBJECTS.map((s, i) => `<button class="pick subj ${s === S.subject ? "sel" : ""}" data-v="${s}" ${stagger(i)}>
-      <div class="ic" style="background:${SUBJ_STYLE[s].bg}">${SUBJ_STYLE[s].ic}</div>
-      <div class="nm">${s}</div><div class="en">${SUBJ_STYLE[s].en}</div>
+    <div class="grid gsub">${regionSubjects(S.region, true).map((s, i) => `<button class="pick subj ${s === S.subject ? "sel" : ""}" data-v="${esc(s)}" ${stagger(i)}>
+      <div class="ic" style="background:${subjStyle(s, i).bg}">${esc(subjStyle(s, i).ic)}</div>
+      <div class="nm">${esc(s)}</div><div class="en">${subjStyle(s, i).en}</div>
       <div class="ft"><span>문항 분석 · 통계</span>${arrow}</div></button>`).join("")}</div>
     <div class="under"><button class="ghost" id="bk">← 센터 다시 고르기</button></div>`;
   el.querySelector("#bk").onclick = () => goStep(0, true);
@@ -746,7 +760,7 @@ function parseSem(t){
 }
 const normTerm = (t) => /기말/.test(t) ? "기말" : /중간/.test(t) ? "중간" : null;
 function normValue(subject, f, v){
-  if ((subject === "수학" || subject === "과학") && f === "difficulty" && v === "특별") return "특상";
+  if (subjLayout(subject) === "basic" && f === "difficulty" && v === "특별") return "특상";
   return v;
 }
 
@@ -770,7 +784,7 @@ function renderReport(exam, qs){
   const paper = $("reportPaper");
   if (reportChart) { reportChart.destroy(); reportChart = null; }
   const title = `${sc?.name || ""} ${S.grade}학년 ${S.sem}학기 ${S.term}고사 분석`;
-  const eng = S.subject === "영어", dkey = eng && S.level === "고" ? "variant" : "difficulty";
+  const eng = subjLayout(S.subject) === "english", dkey = eng && S.level === "고" ? "variant" : "difficulty";
   let rows = "";
   if (!eng) {
     rows = `<thead><tr><th style="width:34px">번호</th><th style="width:52px">난이도</th><th style="width:98px">문제 형태</th><th>세부 내용</th><th style="width:108px">단원</th></tr></thead><tbody>` +
@@ -912,15 +926,45 @@ function renderAdmin(){
   $("imRegionNote").textContent = `→ ${S.region} 센터로 들어갑니다`;
   adSchoolsDraft = regionSchools().map((s) => ({ ...s })).sort((a, b) => (b.active - a.active) || (a.level < b.level) - (a.level > b.level) || a.sort - b.sort);
   drawSchools();
-  $("adSubj").innerHTML = SUBJECTS.map((s) => `<option ${s === S.subject ? "selected" : ""}>${s}</option>`).join("");
+  $("adSubj").innerHTML = regionSubjects().map((s) => `<option ${s === S.subject ? "selected" : ""}>${esc(s)}</option>`).join("");
+  drawSubjects();
   $("adLevel").innerHTML = LEVELS.map((l) => `<option ${l === S.level ? "selected" : ""}>${l}</option>`).join("");
   $("adKind").innerHTML = Object.entries(KIND_LABEL).map(([k, l]) => `<option value="${k}">${l}</option>`).join("");
   fillCodes();
   imSubject = S.subject;
-  seg($("imSubject"), SUBJECTS, S.subject, (v) => { imSubject = v; resetImport(); });
+  seg($("imSubject"), regionSubjects(), S.subject, (v) => { imSubject = v; resetImport(); });
   $("adCenter").value = regionInfo().center_name || "";
   drawImFiles();
 }
+let adSubjectsDraft = [];
+function drawSubjects(fresh=true){
+  if (fresh) adSubjectsDraft = S.subjects.filter((x) => x.region === S.region).map((x) => ({ ...x, saved:true }));
+  $("adSubjects").innerHTML = `<thead><tr><th>과목명</th><th>입력 형식</th><th>순서</th><th>활성 여부</th></tr></thead><tbody>` +
+    adSubjectsDraft.map((x, i) => `<tr data-i="${i}" class="${x.active ? "" : "off"}">
+      <td>${x.saved ? `<b>${esc(x.name)}</b>` : `<input data-k="name" value="${esc(x.name)}" placeholder="예: 국어" style="width:100%">`}</td>
+      <td>${x.saved ? (x.layout === "english" ? "출처·유형형" : "단원·난이도형") : `<select data-k="layout"><option value="basic" ${x.layout !== "english" ? "selected" : ""}>단원·난이도형</option><option value="english" ${x.layout === "english" ? "selected" : ""}>출처·유형형</option></select>`}</td>
+      <td><input data-k="sort" type="number" value="${x.sort}" style="width:76px"></td>
+      <td><label class="sw"><input data-k="active" type="checkbox" ${x.active ? "checked" : ""}><i></i><b>${x.active ? "활성" : "비활성"}</b></label></td></tr>`).join("") + "</tbody>";
+}
+$("adSubjects").addEventListener("input", (e) => {
+  const tr = e.target.closest("tr"); if (!tr || !e.target.dataset.k) return;
+  const x = adSubjectsDraft[Number(tr.dataset.i)], k = e.target.dataset.k;
+  x[k] = k === "active" ? e.target.checked : k === "sort" ? Number(e.target.value) : e.target.value;
+  if (k === "active") { tr.classList.toggle("off", !x.active); tr.querySelector(".sw b").textContent = x.active ? "활성" : "비활성"; }
+});
+$("btnSubjectAdd").onclick = () => { adSubjectsDraft.push({ name:"", layout:"basic", sort:(adSubjectsDraft.length + 1) * 10, active:true, saved:false }); drawSubjects(false); };
+$("btnSubjectSave").onclick = () => run($("btnSubjectSave"), async () => {
+  const list = adSubjectsDraft.map((x) => ({ ...x, name:String(x.name || "").trim() })).filter((x) => x.name);
+  const names = list.map((x) => x.name);
+  if (new Set(names).size !== names.length) throw new Error("같은 이름의 과목이 있습니다.");
+  if (!list.some((x) => x.active)) throw new Error("활성 과목이 하나는 있어야 합니다.");
+  const r = await api("saveSubjects", { region:S.region, subjects:list });
+  S.subjects = r.subjects; S.codes = r.codes;
+  drawSubjects();
+  $("adSubj").innerHTML = regionSubjects().map((s) => `<option ${s === S.subject ? "selected" : ""}>${esc(s)}</option>`).join(""); fillCodes();
+  seg($("imSubject"), regionSubjects(), imSubject, (v) => { imSubject = v; resetImport(); });
+  toast("과목을 저장했습니다.");
+});
 function drawSchools(){
   $("adSchools").innerHTML = `<thead><tr><th>학교명</th><th>학교급</th><th>순서</th><th>활성 여부</th></tr></thead><tbody>` +
     adSchoolsDraft.map((s, i) => `<tr data-i="${i}" class="${s.active ? "" : "off"}"><td><input data-k="name" value="${esc(s.name)}"></td>
@@ -971,7 +1015,7 @@ $("imFiles").onchange = async () => {
   for (const f of $("imFiles").files) {
     let text = await f.text(); text = text.replace(/^﻿/, "");
     const grid = parseDelimited(text, /\.tsv$/i.test(f.name) ? "\t" : ",");
-    const subj = (f.name.match(/수학|과학|영어/) || [null])[0];
+    const subj = regionSubjects().find((x) => f.name.includes(x)) || null;
     imFiles.push({ name:f.name, subject:subj, guessed:!!subj, kind:classify(grid), grid });
   }
   for (const f of imFiles) if (!f.subject) {
@@ -989,7 +1033,7 @@ function drawImFiles(){
     const info = f.kind === "question" ? `문항 ${f.grid.length - 1}행` : f.kind === "comment" ? `총평 ${f.grid.length - 1}행` : "";
     if (!f.kind) return `<div class="muted">－ ${esc(f.name)} · 학교·학기·중간/기말·학년 제목 줄이 없어 건너뜀 (분석 보고서 탭 등)</div>`;
     const w = warnSejong(f.name) ? ` <span style="color:var(--warn)">← 연세(세종) 자료로 보여요. 세종 센터에서 가져오세요</span>` : warnOther(f.name) ? ` <span style="color:var(--warn)">← 세종 자료가 맞는지 확인하세요</span>` : "";
-    return `<div>✔ ${esc(f.name)} · ${info} · 과목 <select data-i="${i}" class="imSubj" style="padding:3px 8px">${SUBJECTS.map((x) => `<option ${x === f.subject ? "selected" : ""}>${x}</option>`).join("")}</select>${f.guessed ? "" : ` <span style="color:var(--warn)">← 과목 확인</span>`}${w}</div>`;
+    return `<div>✔ ${esc(f.name)} · ${info} · 과목 <select data-i="${i}" class="imSubj" style="padding:3px 8px">${regionSubjects().map((x) => `<option ${x === f.subject ? "selected" : ""}>${esc(x)}</option>`).join("")}</select>${f.guessed ? "" : ` <span style="color:var(--warn)">← 과목 확인</span>`}${w}</div>`;
   }).join("");
 }
 $("imFileList").addEventListener("change", (e) => {
@@ -1039,14 +1083,14 @@ $("btnImRun").onclick = () => run($("btnImRun"), async () => {
   const all = imPlan.groups;
   if (!confirm(`${S.region} 센터로 시험 ${all.length}개를 가져옵니다. 같은 시험의 기존 문항은 교체됩니다. 진행할까요?`)) return;
   let done = 0, qs = 0;
-  for (const subject of SUBJECTS) {
+  for (const subject of [...new Set(all.map((g) => g.subject))]) {
     const list = all.filter((g) => g.subject === subject);
     for (let i = 0; i < list.length; i += 30) {
       const r = await api("import", { region:S.region, subject, groups:list.slice(i, i + 30) });
       done += r.exams; qs += r.questions; $("imInfo").textContent = `가져오는 중… ${done}/${all.length}`;
     }
   }
-  const b = await api("bootstrap"); S.schools = b.schools; S.codes = b.codes; S.years = b.years; S.regions = b.regions;
+  const b = await api("bootstrap"); S.schools = b.schools; S.codes = b.codes; S.years = b.years; S.regions = b.regions; S.subjects = b.subjects || [];
   adSchoolsDraft = regionSchools().map((s) => ({ ...s })); drawSchools(); fillCodes();
   $("imInfo").textContent = `완료: 시험 ${done}개, 문항 ${qs}개를 가져왔습니다.`; $("btnImRun").disabled = true; imPlan = null;
   toast("가져오기를 마쳤습니다.");
