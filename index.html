@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>학교내신기록관리</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+:root{
+  --bg:#1f2023; --panel:#2a2b2f; --panel2:#323338; --line:#3d3f45; --text:#e8e8ea; --muted:#a0a3ab;
+  --accent:#4a8df6; --accent2:#2f6fd6; --ok:#43a047; --warn:#f2b84b; --bad:#e5534b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"Pretendard","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;font-size:14px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:8px 14px}
+button:hover{border-color:#5b5e66}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button.primary:hover{background:var(--accent2)}
+button.danger{color:#ffb4ae;border-color:#6b3532}
+button.small{padding:4px 9px;font-size:12px}
+button:disabled{opacity:.5;cursor:default}
+input,select,textarea{background:#1a1b1e;border:1px solid var(--line);border-radius:6px;padding:7px 9px;min-width:0}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+textarea{width:100%;resize:vertical}
+h1,h2,h3{margin:0}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+.center-box{max-width:460px;margin:8vh auto;padding:0 16px}
+.center-box .card{display:flex;flex-direction:column;gap:12px}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{padding:7px 14px}
+.seg button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111;border:1px solid var(--line);padding:10px 18px;border-radius:10px;z-index:99;max-width:90vw}
+#toast.err{border-color:var(--bad);color:#ffd0cc}
+/* 상단 */
+header.top{position:sticky;top:0;z-index:10;background:#18191b;border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header.top .brand{font-weight:700;font-size:16px}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:13px}
+nav.tabs{display:flex;gap:4px;padding:0 16px;border-bottom:1px solid var(--line);background:#1b1c1f;overflow-x:auto}
+nav.tabs button{border:none;background:none;border-radius:0;padding:12px 14px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+nav.tabs button.on{color:#8fb8ff;border-bottom-color:var(--accent)}
+main{padding:16px;max-width:1500px;margin:0 auto}
+/* 시험 선택 카드 */
+.exam-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.exam-card{text-align:left;padding:12px;border-radius:10px;background:var(--panel)}
+.exam-card.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.exam-card b{display:block;font-size:15px;margin-bottom:4px}
+.exam-card small{color:var(--muted)}
+/* 입력 표 */
+.qwrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table.q{border-collapse:collapse;width:100%;min-width:900px}
+table.q th{background:#25262a;color:var(--muted);font-weight:600;font-size:12px;padding:8px 6px;text-align:left;position:sticky;top:0}
+table.q td{border-top:1px solid var(--line);padding:4px}
+table.q td input,table.q td select{width:100%;padding:5px 6px;font-size:13px}
+table.q td.idx{color:var(--muted);text-align:center;width:34px;font-size:12px}
+table.q td.act{width:64px;white-space:nowrap}
+table.q td.act button{padding:3px 7px;font-size:12px}
+.w-no{width:64px}.w-sel{width:130px}.w-unit{width:220px}
+/* 통계 */
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.filters label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.filters select{min-width:120px}
+.kpis{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;min-width:140px}
+.kpi b{display:block;font-size:24px}
+.kpi span{color:var(--muted);font-size:12px}
+.charts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.chart-card{min-width:0;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;min-height:340px;display:flex;flex-direction:column}
+.chart-card h3{font-size:15px;margin-bottom:8px}
+.chart-card .cv{position:relative;flex:1;min-height:280px}
+.empty{color:var(--muted);text-align:center;padding:40px 0}
+table.list{border-collapse:collapse;width:100%}
+table.list th,table.list td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;font-size:13px}
+table.list th{color:var(--muted);font-weight:600}
+table.list tr.click{cursor:pointer}
+table.list tr.click:hover td{background:#2f3035}
+/* 관리 */
+.admin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.admin-grid .card h3{margin-bottom:10px;font-size:16px}
+/* 1장 보고서 (흰 종이) */
+.paper{background:#fff;color:#111;width:210mm;min-height:297mm;margin:0 auto;padding:12mm 11mm;font-size:11px;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.paper .rh{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1d4ed8;padding-bottom:6px;margin-bottom:8px}
+.paper .rh h2{font-size:19px}
+.paper .rh .center{font-size:12px;color:#444;font-weight:600}
+.paper .info{display:flex;gap:0;margin-bottom:8px;border:1px solid #bbb}
+.paper .info div{flex:1;padding:4px 6px;border-right:1px solid #bbb}
+.paper .info div:last-child{border-right:none}
+.paper .info b{color:#1d4ed8;margin-right:6px}
+.paper .body{display:grid;grid-template-columns:1fr 50mm;gap:7px}
+.paper table{border-collapse:collapse;width:100%}
+.paper th,.paper td{border:1px solid #bbb;padding:2px 4px;vertical-align:top;line-height:1.35}
+.paper th{background:#e8eefc;font-weight:700;text-align:center}
+.paper td.c{text-align:center;white-space:nowrap}
+.paper .star{color:#d97706;letter-spacing:-1px}
+.paper .side h4{margin:0 0 4px;font-size:12px;color:#1d4ed8}
+.paper .side table{margin-bottom:8px}
+.paper .side td.n{text-align:right;width:28px}
+.paper .total{margin-top:8px;font-weight:700;font-size:12px}
+.paper .comment{margin-top:6px;border:1px solid #bbb;padding:6px 8px;white-space:pre-wrap;line-height:1.55}
+.paper .comment h4{margin:0 0 4px;color:#1d4ed8}
+.paper .author{text-align:right;margin-top:6px;color:#333}
+.paper .mini{height:150px;position:relative}
+@media (max-width:1100px){.charts{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-grid{grid-template-columns:1fr}}
+@media (max-width:700px){.charts{grid-template-columns:1fr}.exam-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.paper{width:100%;min-height:0;padding:12px}.paper .body{grid-template-columns:1fr}}
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  body > *:not(#printArea){display:none!important}
+  #printArea{display:block!important}
+  #printArea .paper{box-shadow:none;margin:0;min-height:0;width:210mm}
+}
+</style>
+</head>
+<body>
+<div id="toast" class="hidden"></div>
+<div id="printArea" style="display:none"></div>
+
+<!-- 로그인 -->
+<section id="vLogin" class="hidden">
+  <div class="center-box">
+    <h1 style="margin-bottom:16px">학교내신기록관리</h1>
+    <div class="card" id="loginBox">
+      <label class="f">비밀번호<input type="password" id="loginPw" autocomplete="current-password"></label>
+      <button class="primary" id="btnLogin">로그인</button>
+    </div>
+  </div>
+</section>
+
+<!-- 처음 선택 -->
+<section id="vPick" class="hidden">
+  <div class="center-box" style="max-width:620px">
+    <h1 style="margin-bottom:16px">학교내신기록관리</h1>
+    <div class="card">
+      <label class="f">학년도<select id="pkYear"></select></label>
+      <div class="f"><span class="muted" style="font-size:13px">과목</span><div class="seg" id="pkSubject"></div></div>
+      <div class="f"><span class="muted" style="font-size:13px">학교급</span><div class="seg" id="pkLevel"></div></div>
+      <label class="f">학교<select id="pkSchool"></select></label>
+      <div class="f"><span class="muted" style="font-size:13px">학년</span><div class="seg" id="pkGrade"></div></div>
+      <div class="row" style="margin-top:6px">
+        <button class="primary" id="btnEnter">들어가기</button>
+        <span class="spacer"></span>
+        <button id="btnLogout1" class="small">로그아웃</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 본 화면 -->
+<section id="vMain" class="hidden">
+  <header class="top">
+    <span class="brand">학교내신기록관리</span>
+    <span class="chip" id="ctxChip"></span>
+    <button class="small" id="btnChange">선택 변경</button>
+    <span class="spacer"></span>
+    <span class="muted" id="roleLabel"></span>
+    <button class="small" id="btnLogout2">로그아웃</button>
+  </header>
+  <nav class="tabs" id="tabs">
+    <button data-t="input" class="on">문항 입력</button>
+    <button data-t="report">1장 보고서</button>
+    <button data-t="stats">통계</button>
+    <button data-t="list">시험 목록</button>
+    <button data-t="admin" id="tabAdmin">관리</button>
+  </nav>
+  <main>
+    <!-- 입력 -->
+    <div id="tInput">
+      <div class="exam-cards" id="inCards"></div>
+      <div id="inEditor" class="hidden">
+        <div class="row" style="margin-bottom:10px">
+          <h2 id="inTitle" style="font-size:18px"></h2>
+          <span class="muted" id="inMeta"></span>
+          <span class="spacer"></span>
+          <button id="btnPasteOpen">시트에서 붙여넣기</button>
+          <button class="danger hidden" id="btnExamDelete">이 시험 삭제</button>
+          <button class="primary" id="btnSave">저장</button>
+        </div>
+        <div id="pasteBox" class="card hidden" style="margin-bottom:12px">
+          <p class="muted" style="margin:0 0 8px">구글시트에서 문항 행을 복사해 붙여넣으세요. 첫 줄에 제목(학교, 학기, 문항번호, 형태…)이 있으면 제목 기준으로, 없으면 아래 표의 칸 순서대로 들어갑니다. 현재 문항은 붙여넣은 내용으로 <b>바뀝니다</b>.</p>
+          <textarea id="pasteText" rows="6"></textarea>
+          <div class="row" style="margin-top:8px"><button class="primary" id="btnPasteApply">적용</button><button id="btnPasteClose">닫기</button><span class="muted" id="pasteInfo"></span></div>
+        </div>
+        <div class="qwrap"><table class="q" id="qTable"></table></div>
+        <div class="row" style="margin:10px 0 16px">
+          <button id="btnAdd1">+ 1문항</button>
+          <button id="btnAdd5">+ 5문항</button>
+          <span class="muted" id="inCount"></span>
+        </div>
+        <div class="card">
+          <div class="row" style="margin-bottom:8px">
+            <label class="f" style="flex:0 0 200px">코멘트 작성자<input id="inAuthor"></label>
+            <label class="f" style="flex:1">비고(내부 메모)<input id="inMemo"></label>
+          </div>
+          <label class="f">문항 분석 총평<textarea id="inComment" rows="7"></textarea></label>
+        </div>
+      </div>
+      <p class="empty" id="inHint">위에서 학기·시험을 고르세요.</p>
+    </div>
+
+    <!-- 1장 보고서 -->
+    <div id="tReport" class="hidden">
+      <div class="exam-cards" id="rpCards"></div>
+      <div class="row" style="margin-bottom:12px"><span class="spacer"></span><button class="primary" id="btnPrint">인쇄 / PDF 저장</button></div>
+      <div id="reportPaper" class="paper"></div>
+    </div>
+
+    <!-- 통계 -->
+    <div id="tStats" class="hidden">
+      <div class="seg" id="stYears" style="margin-bottom:12px"></div>
+      <div class="filters">
+        <label>학교급<select id="stLevel"></select></label>
+        <label>학교<select id="stSchool"></select></label>
+        <label>학년<select id="stGrade"><option value="">전체</option><option>1</option><option>2</option><option>3</option></select></label>
+        <label>학기<select id="stSem"><option value="">전체</option><option value="1">1학기</option><option value="2">2학기</option></select></label>
+        <label>중간/기말<select id="stTerm"><option value="">전체</option><option>중간</option><option>기말</option></select></label>
+      </div>
+      <div class="kpis" id="stKpis"></div>
+      <div class="charts" id="stCharts"></div>
+    </div>
+
+    <!-- 시험 목록 -->
+    <div id="tList" class="hidden">
+      <div class="filters">
+        <label>범위<select id="lsScope"><option value="school">선택한 학교·학년</option><option value="school_all">선택한 학교 전체 학년</option><option value="all">전체 학교</option></select></label>
+      </div>
+      <div class="card"><table class="list" id="lsTable"></table></div>
+    </div>
+
+    <!-- 관리 -->
+    <div id="tAdmin" class="hidden">
+      <div class="admin-grid">
+        <div class="card">
+          <h3>학교 목록</h3>
+          <div style="max-height:420px;overflow:auto"><table class="list" id="adSchools"></table></div>
+          <div class="row" style="margin-top:10px"><button id="btnSchoolAdd">+ 학교 추가</button><span class="spacer"></span><button class="primary" id="btnSchoolSave">학교 저장</button></div>
+          <p class="muted" style="font-size:12px">숨김 처리하면 선택 목록에서만 빠지고 기록은 그대로 남습니다.</p>
+        </div>
+        <div class="card">
+          <h3>선택 목록 (형태·출처·유형·단원·난이도·변형)</h3>
+          <div class="row" style="margin-bottom:8px">
+            <select id="adSubj"></select><select id="adLevel"></select><select id="adKind"></select>
+          </div>
+          <textarea id="adCodes" rows="14" placeholder="한 줄에 하나씩"></textarea>
+          <div class="row" style="margin-top:8px"><span class="muted" style="font-size:12px">한 줄에 하나씩, 위에서부터 표시 순서</span><span class="spacer"></span><button class="primary" id="btnCodesSave">목록 저장</button></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <h3>구글시트 기록 가져오기</h3>
+          <p class="muted" style="margin:0 0 8px">구글시트에서 내려받은 <b>CSV 파일</b>을 여러 개 한꺼번에 고르거나, 탭 내용을 제목 줄까지 복사해 아래 칸에 붙여넣으세요. 학교·학기·중간/기말·학년이 같은 시험은 문항이 <b>교체</b>됩니다(중복으로 쌓이지 않음). 없는 학교와 선택 목록 값은 자동으로 추가됩니다.</p>
+          <label class="f" style="margin-bottom:6px">CSV 파일 선택 (여러 개 가능 · 파일 이름에 수학/과학/영어가 있으면 과목 자동 인식)<input type="file" id="imFiles" accept=".csv,.tsv,text/csv" multiple></label>
+          <div id="imFileList" style="font-size:12px;margin-bottom:10px"></div>
+          <div class="row" style="margin-bottom:8px"><span class="muted">붙여넣기 내용의 과목</span><div class="seg" id="imSubject"></div></div>
+          <div class="row" style="align-items:stretch">
+            <label class="f" style="flex:1">문항 기록 탭<textarea id="imQ" rows="8"></textarea></label>
+            <label class="f" style="flex:1">총평/코멘트 탭<textarea id="imC" rows="8"></textarea></label>
+          </div>
+          <div class="row" style="margin-top:8px"><button id="btnImPreview">미리보기</button><button class="primary" id="btnImRun" disabled>가져오기 실행</button><span class="muted" id="imInfo"></span></div>
+        </div>
+        <div class="card">
+          <h3>보고서 센터 이름</h3>
+          <div class="row"><input id="adCenter" style="flex:1" placeholder="예: 와이즈만 청라센터"><button class="primary" id="btnCenterSave">저장</button></div>
+        </div>
+        <div class="card">
+          <h3>통합 비밀번호 변경</h3>
+          <div class="row"><input type="password" id="pwNew" placeholder="새 비밀번호(8자 이상)" style="flex:1" autocomplete="new-password"><button class="primary" id="btnPwSave">변경</button></div>
+          <p class="muted" style="font-size:12px">바꾸면 지금 이 화면을 뺀 다른 접속은 모두 로그아웃됩니다.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<script>
+"use strict";
+// ===== 설정 =====
+const DEFAULT_API = "https://xphtctpbysbbdyjaxidh.supabase.co/functions/v1/naesin";
+const API = new URLSearchParams(location.search).get("api") || DEFAULT_API;
+const SUBJECTS = ["수학","과학","영어"];
+const LEVELS = ["중","고"];
+const KIND_LABEL = {form:"형태",source:"출처",qtype:"유형",unit:"단원",difficulty:"난이도",variant:"변형 유무"};
+const FIELD = {
+  no:{label:"번호",cls:"w-no"}, form:{label:"형태",code:"form",cls:"w-sel"}, source:{label:"출처",code:"source",cls:"w-sel"},
+  qtype:{label:"유형",code:"qtype",cls:"w-sel"}, unit:{label:"단원",code:"unit",free:true,cls:"w-unit"},
+  difficulty:{label:"난이도",code:"difficulty",cls:"w-sel"}, variant:{label:"변형 유무",code:"variant",cls:"w-sel"},
+  content:{label:"문항 내용"}, note:{label:"비고"}
+};
+const QF = ["no","form","source","qtype","unit","difficulty","variant","content","note"];
+const EXAMS4 = [[1,"중간"],[1,"기말"],[2,"중간"],[2,"기말"]];
+function layout(subject, level){
+  if (subject === "영어") return level === "고" ? ["no","form","source","qtype","variant","note"] : ["no","form","source","qtype","difficulty","note"];
+  return ["no","form","qtype","unit","difficulty","content","note"];
+}
+function chartPlan(subject, level){
+  if (subject === "영어") {
+    const d = level === "고" ? "variant" : "difficulty";
+    return [["form","doughnut"],["source","doughnut"],[d,"doughnut"],["qtype","doughnut"],["qtype","bar"],["source","bar"]];
+  }
+  return [["form","doughnut"],["unit","doughnut"],["difficulty","doughnut"],["qtype","doughnut"],["unit","bar"],["difficulty","bar"]];
+}
+const PALETTE = ["#1a73e8","#c62828","#fbbc04","#34a853","#5c6bc0","#00838f","#f4511e","#9e9d24","#8e24aa","#ad1457","#6d4c41","#26a69a","#7cb342","#ef6c00","#3949ab"];
+
+// ===== 상태 =====
+const S = { token:null, role:null, schools:[], codes:[], years:[], center:"",
+  year:null, subject:"과학", level:"중", schoolId:null, grade:1,
+  tab:"input", sem:null, term:null, exam:null, rows:[], dirty:false, examList:[], statYear:null, charts:[] };
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem("naesin_"+k)); } catch { return null; } },
+  set(k,v){ try { localStorage.setItem("naesin_"+k, JSON.stringify(v)); } catch {} },
+  del(k){ try { localStorage.removeItem("naesin_"+k); } catch {} }
+};
+
+// ===== 도우미 =====
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let toastTimer;
+function toast(msg, err=false){
+  const t = $("toast"); t.textContent = msg; t.className = err ? "err" : ""; clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add("hidden"), err ? 5000 : 2500);
+}
+async function api(action, data={}){
+  let r;
+  try {
+    r = await fetch(API, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ action, token:S.token, ...data }) });
+  } catch(e) { throw new Error("서버에 연결할 수 없습니다. 인터넷 연결 또는 서버 설정을 확인하세요."); }
+  const j = await r.json().catch(() => ({ ok:false, error:`서버 응답 오류 (${r.status})` }));
+  if (!j.ok) {
+    if (/로그인이 (필요|만료)/.test(j.error || "")) { logoutLocal(); }
+    throw new Error(j.error || "오류");
+  }
+  return j;
+}
+async function run(btn, fn){
+  if (btn) btn.disabled = true;
+  try { return await fn(); } catch(e) { toast(e.message, true); } finally { if (btn) btn.disabled = false; }
+}
+function show(view){ for (const v of ["vLogin","vPick","vMain"]) $(v).classList.toggle("hidden", v !== view); }
+function seg(el, values, current, onPick, labelFn = (v) => v){
+  el.innerHTML = values.map((v) => `<button data-v="${esc(v)}" class="${String(v) === String(current) ? "on" : ""}">${esc(labelFn(v))}</button>`).join("");
+  el.onclick = (e) => { const b = e.target.closest("button"); if (!b) return;
+    el.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); onPick(b.dataset.v); };
+}
+const codesOf = (kind, subject=S.subject, level=S.level) => S.codes.filter((c) => c.kind === kind && c.subject === subject && c.level === level).map((c) => c.name);
+const schoolById = (id) => S.schools.find((s) => s.id === Number(id));
+const examLabel = (sem, term) => `${sem}학기 ${term}`;
+const semText = (year, sem) => `${String(year).slice(2)}년 ${sem}학기`;
+function stars(v){
+  const c = String(v || "").trim()[0];
+  const n = { "하":1, "중":2, "상":3, "특":4 }[c];
+  return n ? "★".repeat(n) : esc(v);
+}
+
+// ===== 로그인 (통합 비밀번호 1개) =====
+function startLogin(){ show("vLogin"); setTimeout(() => $("loginPw").focus(), 0); }
+$("btnLogin").onclick = () => run($("btnLogin"), async () => {
+  const r = await api("login", { password:$("loginPw").value });
+  S.token = r.token; S.role = r.role; store.set("token", { token:r.token, role:r.role, at:Date.now() });
+  $("loginPw").value = ""; await afterLogin();
+});
+$("loginPw").addEventListener("keydown", (e) => { if (e.key === "Enter") $("btnLogin").click(); });
+function logoutLocal(){ S.token = null; store.del("token"); startLogin(); }
+async function logout(){ try { await api("logout"); } catch {} logoutLocal(); }
+$("btnLogout1").onclick = logout; $("btnLogout2").onclick = logout;
+
+async function afterLogin(){
+  const r = await api("bootstrap");
+  S.role = r.role; S.schools = r.schools; S.codes = r.codes; S.years = r.years; S.center = r.center;
+  const last = store.get("pick");
+  if (last) Object.assign(S, { year:last.year, subject:last.subject, level:last.level, schoolId:last.schoolId, grade:last.grade });
+  if (!S.year) S.year = currentSchoolYear();
+  renderPick(); show("vPick");
+}
+function currentSchoolYear(){ const d = new Date(); return d.getMonth() < 2 ? d.getFullYear() - 1 : d.getFullYear(); }
+
+// ===== 처음 선택 =====
+function yearOptions(){
+  const ys = new Set([...S.years, currentSchoolYear(), currentSchoolYear() + 1]);
+  for (let y = 2024; y <= currentSchoolYear(); y++) ys.add(y);
+  return [...ys].sort((a,b) => b - a);
+}
+function renderPick(){
+  $("pkYear").innerHTML = yearOptions().map((y) => `<option value="${y}" ${y === S.year ? "selected" : ""}>${y}학년도</option>`).join("");
+  seg($("pkSubject"), SUBJECTS, S.subject, (v) => S.subject = v);
+  seg($("pkLevel"), LEVELS, S.level, (v) => { S.level = v; S.schoolId = null; fillPickSchools(); }, (v) => v + "학교");
+  seg($("pkGrade"), [1,2,3], S.grade, (v) => S.grade = Number(v), (v) => v + "학년");
+  fillPickSchools();
+}
+function fillPickSchools(){
+  const list = S.schools.filter((s) => s.active && s.level === S.level);
+  $("pkSchool").innerHTML = `<option value="">학교 선택</option>` + list.map((s) => `<option value="${s.id}" ${s.id === S.schoolId ? "selected" : ""}>${esc(s.name)}</option>`).join("");
+}
+$("pkYear").onchange = () => S.year = Number($("pkYear").value);
+$("pkSchool").onchange = () => S.schoolId = Number($("pkSchool").value) || null;
+$("btnEnter").onclick = () => {
+  S.year = Number($("pkYear").value); S.schoolId = Number($("pkSchool").value) || null;
+  if (!S.schoolId) return toast("학교를 선택하세요.", true);
+  store.set("pick", { year:S.year, subject:S.subject, level:S.level, schoolId:S.schoolId, grade:S.grade });
+  enterMain();
+};
+$("btnChange").onclick = () => { if (!confirmLeave()) return; S.dirty = false; renderPick(); show("vPick"); };
+
+// ===== 본 화면 =====
+function enterMain(){
+  S.sem = null; S.term = null; S.exam = null; S.rows = []; S.dirty = false; S.statYear = S.year;
+  const sc = schoolById(S.schoolId);
+  $("ctxChip").textContent = `${S.year}학년도 · ${S.subject} · ${sc ? sc.name : ""} · ${S.grade}학년`;
+  $("roleLabel").textContent = "";
+  show("vMain"); switchTab(S.tab);
+}
+$("tabs").onclick = (e) => { const b = e.target.closest("button"); if (b) switchTab(b.dataset.t); };
+function confirmLeave(){ return !S.dirty || confirm("저장하지 않은 내용이 있습니다. 이동할까요?"); }
+async function switchTab(t){
+  if (t !== S.tab && S.tab === "input" && !confirmLeave()) return;
+  if (t !== "input") S.dirty = false;
+  S.tab = t;
+  document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.t === t));
+  for (const [k, id] of Object.entries({ input:"tInput", report:"tReport", stats:"tStats", list:"tList", admin:"tAdmin" })) $(id).classList.toggle("hidden", k !== t);
+  if (t === "input") await loadCards("inCards", openEditor);
+  if (t === "report") await loadCards("rpCards", openReport);
+  if (t === "stats") renderStatsShell();
+  if (t === "list") loadList();
+  if (t === "admin") renderAdmin();
+}
+window.addEventListener("beforeunload", (e) => { if (S.dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+async function loadCards(elId, onOpen){
+  const el = $(elId);
+  el.innerHTML = EXAMS4.map(([s,t]) => `<button class="exam-card" data-s="${s}" data-t="${t}"><b>${examLabel(s,t)}</b><small>불러오는 중…</small></button>`).join("");
+  try {
+    const r = await api("examList", { year:S.year, subject:S.subject, school_id:S.schoolId, grade:S.grade });
+    S.examList = r.exams;
+  } catch(e) { toast(e.message, true); S.examList = []; }
+  el.innerHTML = EXAMS4.map(([s,t]) => {
+    const ex = S.examList.find((x) => x.semester === s && x.term === t);
+    const on = S.sem === s && S.term === t ? "on" : "";
+    const info = ex ? `${ex.n}문항${ex.has_comment ? " · 총평 있음" : ""}${ex.author ? " · " + esc(ex.author) : ""}` : "기록 없음";
+    return `<button class="exam-card ${on}" data-s="${s}" data-t="${t}"><b>${examLabel(s,t)}</b><small>${info}</small></button>`;
+  }).join("");
+  el.onclick = (e) => { const b = e.target.closest(".exam-card"); if (!b) return;
+    if (elId === "inCards" && !confirmLeave()) return;
+    S.sem = Number(b.dataset.s); S.term = b.dataset.t;
+    el.querySelectorAll(".exam-card").forEach((x) => x.classList.toggle("on", x === b)); onOpen(); };
+  if (S.sem) onOpen();
+}
+const keyArgs = () => ({ year:S.year, subject:S.subject, school_id:S.schoolId, grade:S.grade, semester:S.sem, term:S.term });
+
+// ===== 문항 입력 =====
+async function openEditor(){
+  $("inHint").classList.add("hidden"); $("inEditor").classList.remove("hidden");
+  const sc = schoolById(S.schoolId);
+  $("inTitle").textContent = `${sc?.name} ${S.grade}학년 ${S.sem}학기 ${S.term}고사 (${S.subject})`;
+  $("inMeta").textContent = "불러오는 중…";
+  try {
+    const r = await api("examGet", keyArgs());
+    S.exam = r.exam; S.rows = r.questions.map((q) => ({ ...q }));
+    $("inAuthor").value = r.exam?.author || ""; $("inComment").value = r.exam?.comment || ""; $("inMemo").value = r.exam?.memo || "";
+    $("inMeta").textContent = r.exam ? `마지막 저장: ${new Date(r.exam.updated_at).toLocaleString("ko-KR")} (${r.exam.updated_by})` : "새 시험";
+    $("btnExamDelete").classList.toggle("hidden", !r.exam);
+    if (!S.rows.length) addRows(5, false);
+    S.dirty = false; renderTable();
+  } catch(e) { toast(e.message, true); $("inMeta").textContent = ""; }
+}
+function renderTable(){
+  const cols = layout(S.subject, S.level);
+  const units = sortUnits(codesOf("unit"));
+  let h = `<datalist id="dlUnit">${units.map((u) => `<option value="${esc(u)}">`).join("")}</datalist>`;
+  h += `<thead><tr><th>#</th>${cols.map((c) => `<th class="${FIELD[c].cls || ""}">${FIELD[c].label}</th>`).join("")}<th></th></tr></thead><tbody>`;
+  S.rows.forEach((r, i) => {
+    h += `<tr data-i="${i}"><td class="idx">${i + 1}</td>`;
+    for (const c of cols) {
+      const f = FIELD[c], v = r[c] || "";
+      if (f.code && !f.free) {
+        const opts = codesOf(f.code); if (v && !opts.includes(v)) opts.push(v);
+        h += `<td><select data-f="${c}"><option value=""></option>${opts.map((o) => `<option ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></td>`;
+      } else if (f.free) {
+        h += `<td><input data-f="${c}" list="dlUnit" value="${esc(v)}"></td>`;
+      } else {
+        h += `<td><input data-f="${c}" value="${esc(v)}"></td>`;
+      }
+    }
+    h += `<td class="act"><button data-a="up" title="위로">↑</button><button data-a="del" title="삭제">✕</button></td></tr>`;
+  });
+  $("qTable").innerHTML = h + "</tbody>";
+  $("inCount").textContent = `총 ${S.rows.length}문항`;
+}
+function sortUnits(list){
+  const tag = `[${S.level}${S.grade}]`;
+  return [...list].sort((a,b) => (b.startsWith(tag) - a.startsWith(tag)));
+}
+$("qTable").addEventListener("input", (e) => {
+  const el = e.target, tr = el.closest("tr"); if (!tr || !el.dataset.f) return;
+  S.rows[Number(tr.dataset.i)][el.dataset.f] = el.value; S.dirty = true;
+});
+$("qTable").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-a]"); if (!b) return;
+  const i = Number(b.closest("tr").dataset.i);
+  if (b.dataset.a === "del") S.rows.splice(i, 1);
+  if (b.dataset.a === "up" && i > 0) [S.rows[i-1], S.rows[i]] = [S.rows[i], S.rows[i-1]];
+  S.dirty = true; renderTable();
+});
+function addRows(n, mark=true){
+  for (let k = 0; k < n; k++) {
+    const prev = S.rows[S.rows.length - 1];
+    const row = Object.fromEntries(QF.map((f) => [f, ""]));
+    if (prev) {
+      for (const f of ["form","source","qtype","unit","difficulty","variant"]) row[f] = prev[f] || "";
+      const pn = parseInt(prev.no, 10); row.no = Number.isFinite(pn) ? String(pn + 1) : "";
+    } else row.no = "1";
+    S.rows.push(row);
+  }
+  if (mark) { S.dirty = true; renderTable(); }
+}
+$("btnAdd1").onclick = () => addRows(1);
+$("btnAdd5").onclick = () => addRows(5);
+["inAuthor","inComment","inMemo"].forEach((id) => $(id).addEventListener("input", () => S.dirty = true));
+$("btnSave").onclick = () => run($("btnSave"), async () => {
+  const r = await api("examSave", { ...keyArgs(), author:$("inAuthor").value, comment:$("inComment").value, memo:$("inMemo").value, questions:S.rows });
+  S.dirty = false; toast(`저장했습니다. (${r.n}문항)`); await loadCards("inCards", openEditor);
+});
+$("btnExamDelete").onclick = () => run($("btnExamDelete"), async () => {
+  if (!S.exam || !confirm("이 시험의 문항과 총평을 모두 삭제할까요? 되돌릴 수 없습니다.")) return;
+  await api("examDelete", { id:S.exam.id }); S.dirty = false; toast("삭제했습니다."); await loadCards("inCards", openEditor);
+});
+$("btnPasteOpen").onclick = () => $("pasteBox").classList.toggle("hidden");
+$("btnPasteClose").onclick = () => $("pasteBox").classList.add("hidden");
+$("btnPasteApply").onclick = () => {
+  const grid = parseTSV($("pasteText").value);
+  if (!grid.length) return toast("붙여넣은 내용이 없습니다.", true);
+  const hmap = headerMap(grid[0]);
+  let rows;
+  if (Object.keys(hmap).length >= 2) rows = grid.slice(1).map((r) => rowFromHeader(r, hmap));
+  else { const cols = layout(S.subject, S.level); rows = grid.map((r) => Object.fromEntries(QF.map((f) => [f, (r[cols.indexOf(f)] ?? "").trim()]))); }
+  rows = rows.filter((r) => QF.some((f) => r[f]));
+  S.rows = rows.map((r) => Object.fromEntries(QF.map((f) => [f, normValue(S.subject, f, r[f] || "")])));
+  S.dirty = true; renderTable(); $("pasteInfo").textContent = `${S.rows.length}문항을 넣었습니다. 확인 후 저장하세요.`;
+};
+
+// ===== 구글시트 붙여넣기 해석 =====
+function parseTSV(text){ return parseDelimited(text, "\t"); }
+function parseDelimited(text, D){
+  const out = []; let row = [], cell = "", q = false;
+  text = String(text || "").replace(/\r\n?/g, "\n");
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') { if (text[i+1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += ch;
+    } else if (ch === '"' && cell === "") q = true;
+    else if (ch === D) { row.push(cell); cell = ""; }
+    else if (ch === "\n") { row.push(cell); out.push(row); row = []; cell = ""; }
+    else cell += ch;
+  }
+  if (cell !== "" || row.length) { row.push(cell); out.push(row); }
+  return out.filter((r) => r.some((c) => c.trim() !== ""));
+}
+const HEADERS = [
+  [/^학교$/, "school"], [/^학기$/, "semtext"], [/^(중간\/기말|구분|시험)$/, "term"], [/^학년$/, "grade"],
+  [/^(문항번호|번호)$/, "no"], [/^(문항형태|형태|문제 ?형태)$/, "form"], [/^출처$/, "source"], [/^유형$/, "qtype"],
+  [/^단원$/, "unit"], [/^난이도$/, "difficulty"], [/^변형 ?유무$/, "variant"], [/^(문항 ?내용|세부 ?내용)$/, "content"],
+  [/^비고/, "note"], [/(작성자|담당자)/, "author"], [/(총평|코멘트\(|시험 특징)/, "comment"]
+];
+function headerMap(row){
+  const m = {};
+  row.forEach((h, i) => { const t = String(h).trim(); for (const [re, k] of HEADERS) if (re.test(t) && !(k in m)) { m[k] = i; break; } });
+  return m;
+}
+function rowFromHeader(r, m){ const o = {}; for (const k in m) o[k] = String(r[m[k]] ?? "").trim(); return o; }
+function parseSem(t){
+  const s = String(t || "");
+  const y = s.match(/(\d{4}|\d{2})\s*(년|학년도)?/); const m = s.match(/([12])\s*학기/);
+  if (!y || !m) return null;
+  let year = Number(y[1]); if (year < 100) year += 2000;
+  return { year, semester:Number(m[1]) };
+}
+const normTerm = (t) => /기말/.test(t) ? "기말" : /중간/.test(t) ? "중간" : null;
+
+// ===== 1장 보고서 =====
+let reportChart = null;
+async function openReport(){
+  const paper = $("reportPaper"); paper.innerHTML = `<p style="color:#666">불러오는 중…</p>`;
+  try {
+    const r = await api("examGet", keyArgs());
+    renderReport(r.exam, r.questions);
+  } catch(e) { toast(e.message, true); }
+}
+function countBy(list, f){
+  const m = new Map(); for (const q of list) { const k = q[f] || "(미입력)"; m.set(k, (m.get(k) || 0) + 1); }
+  return [...m.entries()];
+}
+function orderBy(entries, kind){
+  const order = codesOf(kind);
+  return entries.sort((a,b) => { const ia = order.indexOf(a[0]), ib = order.indexOf(b[0]);
+    return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || b[1] - a[1]; });
+}
+function renderReport(exam, qs){
+  const sc = schoolById(S.schoolId);
+  const paper = $("reportPaper");
+  if (reportChart) { reportChart.destroy(); reportChart = null; }
+  const title = `${sc?.name || ""} ${S.grade}학년 ${S.sem}학기 ${S.term}고사 분석`;
+  const eng = S.subject === "영어", dkey = eng && S.level === "고" ? "variant" : "difficulty";
+  let rows = "";
+  if (!eng) {
+    rows = `<thead><tr><th style="width:34px">번호</th><th style="width:52px">난이도</th><th style="width:98px">문제 형태</th><th>세부 내용</th><th style="width:108px">단원</th></tr></thead><tbody>` +
+      qs.map((q) => `<tr><td class="c">${esc(q.no)}</td><td class="c star">${stars(q.difficulty)}</td><td class="c">${esc(q.form)}${q.qtype ? `(${esc(q.qtype)})` : ""}</td><td>${esc(q.content)}${q.note ? `<br><span style="color:#666">${esc(q.note)}</span>` : ""}</td><td>${esc(q.unit)}</td></tr>`).join("");
+  } else {
+    rows = `<thead><tr><th style="width:34px">번호</th><th style="width:50px">형태</th><th style="width:70px">출처</th><th style="width:78px">유형</th><th style="width:80px">${FIELD[dkey].label}</th><th>비고</th></tr></thead><tbody>` +
+      qs.map((q) => `<tr><td class="c">${esc(q.no)}</td><td class="c">${esc(q.form)}</td><td class="c">${esc(q.source)}</td><td class="c">${esc(q.qtype)}</td><td class="c">${esc(q[dkey])}</td><td>${esc(q.note || q.content)}</td></tr>`).join("");
+  }
+  rows += "</tbody>";
+  const sideTable = (label, entries) => `<h4>${label}</h4><table>${entries.map(([k,n]) => `<tr><td>${esc(k)}</td><td class="n">${n}</td></tr>`).join("") || `<tr><td class="muted">-</td></tr>`}</table>`;
+  let side = "";
+  const diffEntries = orderBy(countBy(qs, dkey), dkey);
+  if (!eng) {
+    side += sideTable("단원 구성", countBy(qs, "unit").sort((a,b) => b[1] - a[1]));
+    side += sideTable("난이도", diffEntries.map(([k,n]) => [k, n]));
+  } else {
+    side += sideTable("유형", countBy(qs, "qtype").sort((a,b) => b[1] - a[1]));
+    side += sideTable("출처", countBy(qs, "source").sort((a,b) => b[1] - a[1]));
+    side += sideTable(FIELD[dkey].label, diffEntries);
+  }
+  side += `<h4>${FIELD[dkey].label}별 문항 수</h4><div class="mini"><canvas id="rpChart"></canvas></div>`;
+  paper.innerHTML = `
+    <div class="rh"><h2>${esc(title)}</h2><span class="center">${esc(S.center)}</span></div>
+    <div class="info"><div><b>학교</b>${esc(sc?.name)}</div><div><b>학기</b>${semText(S.year, S.sem)}</div><div><b>구분</b>${esc(S.term)}</div><div><b>학년</b>${S.grade}</div><div><b>과목</b>${esc(S.subject)}</div></div>
+    ${qs.length ? `<div class="body"><div><table>${rows}</table></div><div class="side">${side}</div></div>` : `<p style="color:#666;padding:30px 0;text-align:center">이 시험은 아직 입력된 문항이 없습니다.</p>`}
+    <div class="total">총 문항수 ${qs.length}</div>
+    <div class="comment"><h4>[ 문항 분석 총평 ]</h4>${esc(exam?.comment || "")}</div>
+    <div class="author">코멘트 작성자: ${esc(exam?.author || "")}</div>`;
+  if (qs.length && window.Chart) {
+    reportChart = new Chart($("rpChart"), {
+      type:"bar", data:{ labels:diffEntries.map((e) => e[0]), datasets:[{ data:diffEntries.map((e) => e[1]), backgroundColor:"#4a7fe0" }] },
+      options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{ legend:{display:false}, datalabels:{ anchor:"end", align:"top", color:"#111", font:{weight:"bold"} } },
+        layout:{ padding:{ top:16 } }, scales:{ y:{ beginAtZero:true, grace:"10%", ticks:{ precision:0, color:"#333" }, grid:{color:"#ddd"} }, x:{ ticks:{color:"#333"}, grid:{display:false} } } },
+      plugins: window.ChartDataLabels ? [ChartDataLabels] : []
+    });
+  }
+}
+// 인쇄할 때 A4 한 장에 들어가도록 자동 축소
+function fitPaper(){
+  const src = $("reportPaper"), area = $("printArea");
+  if (S.tab !== "report" || !src.innerHTML) return;
+  // 그래프는 그림으로 바꿔 복사
+  const clone = src.cloneNode(true); clone.id = "";
+  const cv = src.querySelector("canvas"), ccv = clone.querySelector("canvas");
+  if (cv && ccv) { const img = document.createElement("img"); img.src = cv.toDataURL("image/png"); img.style.cssText = "width:100%;height:100%;object-fit:contain"; ccv.replaceWith(img); }
+  area.innerHTML = ""; area.appendChild(clone);
+  const a4 = 297 * 96 / 25.4 - 6; // A4 높이(px)
+  area.style.cssText = "display:block;position:absolute;left:-10000px;top:0"; // 높이 재기
+  const h = clone.scrollHeight;
+  area.style.cssText = "display:none";
+  if (h > a4) clone.style.zoom = String(Math.max(0.45, a4 / h));
+}
+window.addEventListener("beforeprint", fitPaper);
+window.addEventListener("afterprint", () => { $("printArea").innerHTML = ""; });
+$("btnPrint").onclick = () => { fitPaper(); window.print(); };
+
+// ===== 통계 =====
+function renderStatsShell(){
+  const ys = yearOptions().slice().sort((a,b) => a - b);
+  seg($("stYears"), ys, S.statYear, (v) => { S.statYear = Number(v); loadStats(); }, (v) => v + "학년도");
+  $("stLevel").innerHTML = LEVELS.map((l) => `<option ${l === S.level ? "selected" : ""}>${l}</option>`).join("");
+  fillStatSchools(S.schoolId);
+  $("stGrade").value = String(S.grade); $("stSem").value = ""; $("stTerm").value = "";
+  loadStats();
+}
+function fillStatSchools(sel){
+  const lv = $("stLevel").value;
+  $("stSchool").innerHTML = `<option value="">전체</option>` + S.schools.filter((s) => s.level === lv).map((s) => `<option value="${s.id}" ${s.id === sel ? "selected" : ""}>${esc(s.name)}${s.active ? "" : " (숨김)"}</option>`).join("");
+}
+$("stLevel").onchange = () => { fillStatSchools(null); loadStats(); };
+["stSchool","stGrade","stSem","stTerm"].forEach((id) => $(id).onchange = loadStats);
+let statSeq = 0;
+async function loadStats(){
+  const my = ++statSeq;
+  const level = $("stLevel").value;
+  const args = { year:S.statYear, subject:S.subject, level, school_id:$("stSchool").value || null, grade:$("stGrade").value || null, semester:$("stSem").value || null, term:$("stTerm").value || null };
+  $("stKpis").innerHTML = `<div class="kpi"><span>불러오는 중…</span></div>`;
+  let r; try { r = await api("stats", args); } catch(e) { toast(e.message, true); return; }
+  if (my !== statSeq) return;
+  $("stKpis").innerHTML = `<div class="kpi"><b>${r.exams}</b><span>시험 수</span></div><div class="kpi"><b>${r.total}</b><span>총 문항 수</span></div><div class="kpi"><b>${esc(S.subject)}</b><span>${S.statYear}학년도 · ${level}학교</span></div>`;
+  S.charts.forEach((c) => c.destroy()); S.charts = [];
+  const plan = chartPlan(S.subject, level);
+  $("stCharts").innerHTML = plan.map(([f, t], i) => `<div class="chart-card"><h3>${KIND_LABEL[f]}${t === "bar" ? "별 문항수" : " 비율"}</h3><div class="cv">${r.total ? `<canvas id="sc${i}"></canvas>` : `<div class="empty">기록이 없습니다</div>`}</div></div>`).join("");
+  if (!r.total || !window.Chart) return;
+  plan.forEach(([f, t], i) => {
+    let data = (r.by[f] || []).map((x) => [x.name, x.n]);
+    if (f === "difficulty" || f === "variant") data = orderBy(data, f);
+    if (t === "doughnut" && data.length > 10) { const rest = data.slice(9).reduce((a, x) => a + x[1], 0); data = [...data.slice(0, 9), ["기타(나머지)", rest]]; }
+    if (t === "bar") data = data.slice(0, 15);
+    S.charts.push(makeChart($("sc" + i), t, data, r.total));
+  });
+}
+function makeChart(canvas, type, data, total){
+  const labels = data.map((d) => d[0]), values = data.map((d) => d[1]);
+  const common = { responsive:true, maintainAspectRatio:false, animation:{ duration:300 } };
+  const plugins = window.ChartDataLabels ? [ChartDataLabels] : [];
+  if (type === "doughnut") {
+    return new Chart(canvas, { type:"doughnut", plugins,
+      data:{ labels, datasets:[{ data:values, backgroundColor:labels.map((_, i) => PALETTE[i % PALETTE.length]), borderColor:"#2a2b2f", borderWidth:1 }] },
+      options:{ ...common, cutout:"52%", plugins:{
+        legend:{ position: innerWidth < 700 ? "bottom" : "right", labels:{ color:"#ddd", boxWidth:12, font:{ size:12 } } },
+        tooltip:{ callbacks:{ label:(c) => `${c.label}: ${c.raw}문항 (${(c.raw / total * 100).toFixed(1)}%)` } },
+        datalabels:{ color:"#fff", font:{ size:11 }, formatter:(v) => { const p = v / values.reduce((a,b) => a + b, 0) * 100; return p >= 4 ? p.toFixed(1) + "%" : ""; } } } } });
+  }
+  return new Chart(canvas, { type:"bar", plugins,
+    data:{ labels, datasets:[{ data:values, backgroundColor:"#1a73e8" }] },
+    options:{ ...common, indexAxis:"y", plugins:{ legend:{ display:false }, datalabels:{ color:"#fff", anchor:"end", align:"start", font:{ weight:"bold", size:11 } } },
+      scales:{ x:{ beginAtZero:true, ticks:{ color:"#aaa", precision:0 }, grid:{ color:"#3a3b40" } }, y:{ ticks:{ color:"#ddd", autoSkip:false, font:{ size:11 } }, grid:{ display:false } } } } });
+}
+
+// ===== 시험 목록 =====
+$("lsScope").onchange = loadList;
+async function loadList(){
+  const scope = $("lsScope").value;
+  const args = { year:S.year, subject:S.subject };
+  if (scope !== "all") args.school_id = S.schoolId;
+  if (scope === "school") args.grade = S.grade;
+  $("lsTable").innerHTML = `<tr><td class="muted">불러오는 중…</td></tr>`;
+  let r; try { r = await api("examList", args); } catch(e) { toast(e.message, true); return; }
+  const rows = r.exams.filter((e) => scope !== "all" || e.level === S.level);
+  $("lsTable").innerHTML = `<thead><tr><th>학교</th><th>학년</th><th>시험</th><th>문항</th><th>총평</th><th>작성자</th><th>마지막 저장</th></tr></thead><tbody>` +
+    (rows.map((e) => `<tr class="click" data-s="${e.school_id}" data-g="${e.grade}" data-sem="${e.semester}" data-t="${e.term}"><td>${esc(e.school)}</td><td>${e.grade}</td><td>${examLabel(e.semester, e.term)}</td><td>${e.n}</td><td>${e.has_comment ? "있음" : "-"}</td><td>${esc(e.author)}</td><td>${new Date(e.updated_at).toLocaleDateString("ko-KR")} (${esc(e.updated_by)})</td></tr>`).join("")
+      || `<tr><td colspan="7" class="muted">${S.year}학년도 ${S.subject} 기록이 없습니다.</td></tr>`) + "</tbody>";
+}
+$("lsTable").onclick = (e) => {
+  const tr = e.target.closest("tr.click"); if (!tr) return;
+  S.schoolId = Number(tr.dataset.s); S.grade = Number(tr.dataset.g); S.sem = Number(tr.dataset.sem); S.term = tr.dataset.t;
+  const sc = schoolById(S.schoolId); if (sc) S.level = sc.level;
+  store.set("pick", { year:S.year, subject:S.subject, level:S.level, schoolId:S.schoolId, grade:S.grade });
+  $("ctxChip").textContent = `${S.year}학년도 · ${S.subject} · ${sc ? sc.name : ""} · ${S.grade}학년`;
+  switchTab("report");
+};
+
+// ===== 관리 =====
+let adSchoolsDraft = [];
+function renderAdmin(){
+  adSchoolsDraft = S.schools.map((s) => ({ ...s }));
+  drawSchools();
+  $("adSubj").innerHTML = SUBJECTS.map((s) => `<option ${s === S.subject ? "selected" : ""}>${s}</option>`).join("");
+  $("adLevel").innerHTML = LEVELS.map((l) => `<option ${l === S.level ? "selected" : ""}>${l}</option>`).join("");
+  $("adKind").innerHTML = Object.entries(KIND_LABEL).map(([k, l]) => `<option value="${k}">${l}</option>`).join("");
+  fillCodes();
+  seg($("imSubject"), SUBJECTS, S.subject, (v) => { imSubject = v; resetImport(); });
+  imSubject = S.subject;
+  $("adCenter").value = S.center || "";
+}
+function drawSchools(){
+  $("adSchools").innerHTML = `<thead><tr><th>학교명</th><th>학교급</th><th>순서</th><th>사용</th></tr></thead><tbody>` +
+    adSchoolsDraft.map((s, i) => `<tr data-i="${i}"><td><input data-k="name" value="${esc(s.name)}" style="width:100%"></td>
+      <td><select data-k="level">${LEVELS.map((l) => `<option ${l === s.level ? "selected" : ""}>${l}</option>`).join("")}</select></td>
+      <td><input data-k="sort" type="number" value="${s.sort}" style="width:70px"></td>
+      <td><input data-k="active" type="checkbox" ${s.active ? "checked" : ""}></td></tr>`).join("") + "</tbody>";
+}
+$("adSchools").addEventListener("input", (e) => {
+  const tr = e.target.closest("tr"); if (!tr || !e.target.dataset.k) return;
+  const s = adSchoolsDraft[Number(tr.dataset.i)], k = e.target.dataset.k;
+  s[k] = k === "active" ? e.target.checked : k === "sort" ? Number(e.target.value) : e.target.value;
+});
+$("btnSchoolAdd").onclick = () => { adSchoolsDraft.push({ name:"", level:S.level, sort:500, active:true }); drawSchools(); };
+$("btnSchoolSave").onclick = () => run($("btnSchoolSave"), async () => {
+  const r = await api("saveSchools", { schools:adSchoolsDraft });
+  S.schools = r.schools; adSchoolsDraft = S.schools.map((s) => ({ ...s })); drawSchools(); toast("학교 목록을 저장했습니다.");
+});
+function fillCodes(){ $("adCodes").value = codesOf($("adKind").value, $("adSubj").value, $("adLevel").value).join("\n"); }
+["adSubj","adLevel","adKind"].forEach((id) => $(id).onchange = fillCodes);
+$("btnCodesSave").onclick = () => run($("btnCodesSave"), async () => {
+  const names = $("adCodes").value.split("\n").map((s) => s.trim()).filter(Boolean);
+  const r = await api("saveCodes", { kind:$("adKind").value, subject:$("adSubj").value, level:$("adLevel").value, names });
+  S.codes = r.codes; fillCodes(); toast("목록을 저장했습니다.");
+});
+$("btnCenterSave").onclick = () => run($("btnCenterSave"), async () => { await api("saveCenter", { center:$("adCenter").value }); S.center = $("adCenter").value.trim(); toast("저장했습니다."); });
+$("btnPwSave").onclick = () => run($("btnPwSave"), async () => {
+  await api("changePassword", { password:$("pwNew").value }); $("pwNew").value = ""; toast("비밀번호를 바꿨습니다.");
+});
+
+// --- 구글시트 가져오기 (CSV 파일 / 붙여넣기) ---
+let imSubject = "과학", imPlan = null, imFiles = [];
+function resetImport(){ imPlan = null; $("btnImRun").disabled = true; $("imInfo").textContent = ""; }
+["imQ","imC"].forEach((id) => $(id).addEventListener("input", resetImport));
+function classify(grid){
+  if (!grid.length) return null;
+  const m = headerMap(grid[0]);
+  const base = "school" in m && "semtext" in m && "term" in m && "grade" in m;
+  if (base && "comment" in m) return "comment";
+  if (base && "no" in m) return "question";
+  return null;
+}
+$("imFiles").onchange = async () => {
+  imFiles = [];
+  for (const f of $("imFiles").files) {
+    let text = await f.text(); text = text.replace(/^﻿/, "");
+    const grid = parseDelimited(text, /\.tsv$/i.test(f.name) ? "\t" : ",");
+    const subj = (f.name.match(/수학|과학|영어/) || [null])[0];
+    // 과목이 파일 이름에 없으면 같이 고른 파일 중 같은 묶음(예: "[연세 고등학교 …]") 이름의 과목을 따름
+    imFiles.push({ name:f.name, subject:subj, guessed:!!subj, kind:classify(grid), grid });
+  }
+  for (const f of imFiles) if (!f.subject) {
+    const prefix = f.name.split(" - ")[0];
+    const sib = imFiles.find((x) => x !== f && x.subject && x.name.split(" - ")[0] === prefix);
+    f.subject = sib ? sib.subject : imSubject;
+    if (sib) f.guessed = true;
+  }
+  drawImFiles(); resetImport();
+};
+function drawImFiles(){
+  $("imFileList").innerHTML = imFiles.map((f, i) => {
+    const info = f.kind === "question" ? `문항 ${f.grid.length - 1}행` : f.kind === "comment" ? `총평 ${f.grid.length - 1}행` : "";
+    if (!f.kind) return `<div style="margin:3px 0" class="muted">－ ${esc(f.name)} · 학교·학기·중간/기말·학년 제목 줄이 없어 건너뜀 (분석 보고서 탭 등)</div>`;
+    return `<div style="margin:3px 0">✔ ${esc(f.name)} · ${info} · 과목 <select data-i="${i}" class="imSubj" style="padding:2px 6px">${SUBJECTS.map((x) => `<option ${x === f.subject ? "selected" : ""}>${x}</option>`).join("")}</select>${f.guessed ? "" : ` <span style="color:var(--warn)">← 파일 이름에 과목이 없어요. 과목을 확인하세요</span>`}</div>`;
+  }).join("");
+}
+$("imFileList").addEventListener("change", (e) => {
+  const el = e.target.closest("select.imSubj"); if (!el) return;
+  const f = imFiles[Number(el.dataset.i)]; f.subject = el.value; f.guessed = true; drawImFiles(); resetImport();
+});
+function normValue(subject, f, v){
+  if ((subject === "수학" || subject === "과학") && f === "difficulty" && v === "특별") return "특상";
+  return v;
+}
+function buildImport(){
+  const sources = imFiles.filter((f) => f.kind).map((f) => ({ ...f }));
+  const q = parseDelimited($("imQ").value, "\t"), c = parseDelimited($("imC").value, "\t");
+  if (q.length) { if (classify(q) !== "question") throw new Error("문항 칸: 첫 줄에 학교·학기·중간/기말·학년·문항번호 제목이 있어야 합니다."); sources.push({ name:"붙여넣기(문항)", subject:imSubject, kind:"question", grid:q }); }
+  if (c.length) { if (classify(c) !== "comment") throw new Error("총평 칸: 첫 줄에 학교·학기·중간/기말·학년·총평 제목이 있어야 합니다."); sources.push({ name:"붙여넣기(총평)", subject:imSubject, kind:"comment", grid:c }); }
+  if (!sources.length) throw new Error("가져올 파일이나 붙여넣은 내용이 없습니다.");
+  const groups = new Map(); const skipped = []; const newSchools = new Set(); const known = new Set(S.schools.map((s) => s.name));
+  let qn = 0, cn = 0;
+  // 문항 먼저, 총평 나중
+  sources.sort((a, b) => (a.kind === "comment") - (b.kind === "comment"));
+  for (const src of sources) {
+    const m = headerMap(src.grid[0]);
+    src.grid.slice(1).forEach((r, i) => {
+      const o = rowFromHeader(r, m);
+      const sem = parseSem(o.semtext), term = normTerm(o.term), grade = Number(o.grade);
+      if (!o.school || !sem || !term || ![1,2,3].includes(grade)) { if (Object.values(o).some(Boolean)) skipped.push(`${src.name} ${i + 2}행`); return; }
+      if (!known.has(o.school)) newSchools.add(o.school);
+      const k = [src.subject, o.school, sem.year, sem.semester, term, grade].join("|");
+      if (!groups.has(k)) groups.set(k, { subject:src.subject, school:o.school, year:sem.year, semester:sem.semester, term, grade });
+      const g = groups.get(k);
+      if (src.kind === "question") { (g.questions ||= []).push(Object.fromEntries(QF.map((f) => [f, normValue(src.subject, f, o[f] || "")]))); qn++; }
+      else { g.comment = o.comment || ""; if ("author" in m) g.author = o.author || ""; cn++; }
+    });
+  }
+  return { groups:[...groups.values()], qn, cn, skipped, newSchools:[...newSchools] };
+}
+$("btnImPreview").onclick = () => {
+  try {
+    const r = buildImport(); imPlan = r;
+    const bySubj = {}; for (const g of r.groups) { bySubj[g.subject] ||= { e:0, q:0 }; bySubj[g.subject].e++; bySubj[g.subject].q += g.questions?.length || 0; }
+    const years = [...new Set(r.groups.map((g) => g.year))].sort().join(", ");
+    $("imInfo").innerHTML = Object.entries(bySubj).map(([k, v]) => `${esc(k)} 시험 ${v.e}개·문항 ${v.q}개`).join(" / ") + ` · 총평 ${r.cn}개 · 학년도 ${esc(years)}` +
+      (r.newSchools.length ? ` · 새 학교 ${r.newSchools.length}곳(${esc(r.newSchools.join(", "))})` : "") +
+      (r.groups.some((g) => (g.questions?.length || 0) > 40) ? ` · <span style="color:var(--warn)">문항 40개 넘는 시험 ${r.groups.filter((g) => (g.questions?.length || 0) > 40).map((g) => `${g.school} ${g.year % 100}년 ${g.semester}학기 ${g.term} ${g.grade}학년(${g.questions.length})`).join(", ")} — 시트에 같은 시험이 두 번 들어갔는지 확인 필요</span>` : "") +
+      (r.skipped.length ? ` · <span style="color:var(--warn)">건너뜀 ${r.skipped.length}행 (${esc(r.skipped.slice(0, 4).join(", "))}${r.skipped.length > 4 ? " …" : ""})</span>` : "");
+    $("btnImRun").disabled = !r.groups.length;
+  } catch(e) { toast(e.message, true); resetImport(); }
+};
+$("btnImRun").onclick = () => run($("btnImRun"), async () => {
+  if (!imPlan?.groups.length) return;
+  const all = imPlan.groups;
+  if (!confirm(`시험 ${all.length}개를 가져옵니다. 같은 시험의 기존 문항은 교체됩니다. 진행할까요?`)) return;
+  let done = 0, qs = 0;
+  for (const subject of SUBJECTS) {
+    const list = all.filter((g) => g.subject === subject);
+    for (let i = 0; i < list.length; i += 30) {
+      const r = await api("import", { subject, groups:list.slice(i, i + 30) });
+      done += r.exams; qs += r.questions; $("imInfo").textContent = `가져오는 중… ${done}/${all.length}`;
+    }
+  }
+  const b = await api("bootstrap"); S.schools = b.schools; S.codes = b.codes; S.years = b.years;
+  adSchoolsDraft = S.schools.map((s) => ({ ...s })); drawSchools(); fillCodes();
+  $("imInfo").textContent = `완료: 시험 ${done}개, 문항 ${qs}개를 가져왔습니다.`; $("btnImRun").disabled = true; imPlan = null;
+  toast("가져오기를 마쳤습니다.");
+});
+
+// ===== 시작 =====
+(async function init(){
+  const saved = store.get("token");
+  if (saved && Date.now() - saved.at < 11 * 3600 * 1000) {
+    S.token = saved.token; S.role = saved.role;
+    try { await afterLogin(); return; } catch { S.token = null; store.del("token"); }
+  }
+  startLogin();
+})();
+</script>
+</body>
+</html>
