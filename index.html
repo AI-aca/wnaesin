@@ -42,6 +42,26 @@ select option{background:#151a2a}
 textarea{width:100%;resize:vertical;line-height:1.6}
 h1,h2,h3,h4,p{margin:0}
 .hidden{display:none!important}
+.adminbtn{display:flex;align-items:center;gap:7px;border-radius:999px;padding:7px 15px;font-size:13px;font-weight:700;background:var(--glass2);border:1px solid var(--line2);color:var(--text);white-space:nowrap}
+.adminbtn::before{content:"⚙";font-size:14px;color:var(--a2)}
+.adminbtn:hover{border-color:var(--a1)}
+.modal{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(4,6,12,.62);backdrop-filter:blur(6px)}
+.modal .mbox{width:min(380px,92vw);padding:24px;border-radius:18px;background:#121828;border:1px solid var(--line2);box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.modal h3{margin:0 0 6px}.modal input{width:100%}
+tr.del td{opacity:.45;text-decoration:line-through}
+td.act button:disabled{opacity:.3;cursor:not-allowed}
+.adminbtn.on{background:var(--grad);color:#0a0d18;border-color:transparent}.adminbtn.on::before{color:#0a0d18}
+.wtop .steps{margin-right:auto}
+.wtop .adminbtn{margin-left:auto}.wtop .steps+.adminbtn{margin-left:0}
+button.small,.crumbs button{white-space:nowrap}
+@media (max-width:640px){
+  #tAdmin .card,#tAdmin>div{min-width:0}
+  #tAdmin table{display:block;overflow-x:auto;white-space:nowrap;max-width:100%}
+  #tAdmin table td,#tAdmin table th{white-space:nowrap}
+  .adminbtn{padding:6px 11px;font-size:12px}
+  .wtop .brand{white-space:nowrap;font-size:0;gap:0}.wtop .brand .mk{font-size:14px}
+  header.top{flex-wrap:wrap}header.top .crumbs{order:5;width:100%}
+}
 .muted{color:var(--muted)}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .spacer{flex:1}
@@ -254,10 +274,21 @@ tr.off td input[data-k="name"]{color:var(--muted)}
   <div class="wtop">
     <div class="brand"><span class="mk">내</span>학교내신기록관리</div>
     <div class="steps" id="steps"></div>
+    <button class="adminbtn hidden" id="btnAdmin1"></button>
     <button class="ghost small" id="btnLogout1">로그아웃</button>
   </div>
   <div class="stage" id="stage"></div>
 </section>
+
+<!-- 관리자 비밀번호 -->
+<div id="admModal" class="modal hidden">
+  <div class="mbox">
+    <h3>관리자 비밀번호</h3>
+    <p class="muted" id="admWhy" style="margin:0 0 12px"></p>
+    <input type="password" id="admPw" placeholder="관리자 비밀번호" autocomplete="off">
+    <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="ghost" id="admCancel">취소</button><button class="primary" id="admOk">확인</button></div>
+  </div>
+</div>
 
 <!-- 본 화면 -->
 <section id="vMain" class="hidden">
@@ -265,6 +296,7 @@ tr.off td input[data-k="name"]{color:var(--muted)}
     <div class="brand"><span class="mk">내</span></div>
     <div class="crumbs" id="crumbs"></div>
     <span class="spacer"></span>
+    <button class="adminbtn" id="btnAdmin2"></button>
     <button class="ghost small" id="btnLogout2">로그아웃</button>
   </header>
   <nav class="tabs" id="tabs">
@@ -272,7 +304,6 @@ tr.off td input[data-k="name"]{color:var(--muted)}
     <button data-t="report">1장 보고서</button>
     <button data-t="stats">통계</button>
     <button data-t="list">시험 목록</button>
-    <button data-t="admin">센터 관리</button>
   </nav>
   <main>
     <!-- 입력 -->
@@ -494,6 +525,7 @@ $("btnLogout1").onclick = logout; $("btnLogout2").onclick = logout;
 
 async function afterLogin(){
   const r = await api("bootstrap");
+  S.role = r.role; if (S.role === "owner") dropAdmin();
   S.regions = r.regions; S.schools = r.schools; S.codes = r.codes; S.years = r.years;
   // 서버가 아직 과목 기능 전 버전이면 기본 3과목으로 표시
   S.subjects = r.subjects || S.regions.flatMap((g) => [["수학","basic",10],["과학","basic",20],["영어","english",30]].map(([name, layout, sort]) => ({ region:g.name, name, layout, sort, active:true })));
@@ -514,8 +546,29 @@ function renderSteps(){
   }).join("");
 }
 $("steps").onclick = (e) => { const b = e.target.closest(".st.done"); if (b) goStep(Number(b.dataset.i), true); };
+// ===== 관리자 비밀번호 확인 =====
+function ensureAdmin(why){
+  if (S.role === "owner") return Promise.resolve(true);
+  return new Promise((resolve) => {
+    $("admWhy").textContent = `${why}에는 관리자 비밀번호가 필요합니다.`;
+    $("admPw").value = ""; $("admModal").classList.remove("hidden"); setTimeout(() => $("admPw").focus(), 30);
+    const close = (v) => { $("admModal").classList.add("hidden"); $("admOk").onclick = $("admCancel").onclick = $("admPw").onkeydown = null; resolve(v); };
+    $("admCancel").onclick = () => close(false);
+    $("admPw").onkeydown = (e) => { if (e.key === "Enter") $("admOk").click(); if (e.key === "Escape") close(false); };
+    $("admOk").onclick = () => run($("admOk"), async () => {
+      const r = await api("adminLogin", { password:$("admPw").value });
+      S.role = r.role; close(true);
+    });
+  });
+}
+function dropAdmin(){ if (S.role === "owner") { S.role = "teacher"; api("adminLogout").catch(() => {}); } }
+function adminLabel(){ return `${S.region}센터 관리`; }
+function updateAdminBtns(){
+  $("btnAdmin1").textContent = adminLabel(); $("btnAdmin1").classList.toggle("hidden", !(S.step >= 1 && S.region));
+  $("btnAdmin2").textContent = adminLabel(); $("btnAdmin2").classList.toggle("on", S.tab === "admin");
+}
 function goStep(i, back=false){
-  S.step = i; renderSteps();
+  S.step = i; renderSteps(); updateAdminBtns();
   const st = $("stage"); const el = document.createElement("div"); el.className = "step" + (back ? " back" : "");
   st.innerHTML = ""; st.appendChild(el);
   [stepRegion, stepSubject, stepSchool, stepGrade][i](el);
@@ -581,22 +634,42 @@ function stepGrade(el){
 
 // ===== 본 화면 =====
 function renderCrumbs(){
+  if (S.adminOnly) {
+    $("crumbs").innerHTML = `<button data-i="${S.adminBackStep ?? 1}"><span>←</span>선택 화면으로</button><span class="sep">›</span><button data-i="0"><span>센터</span>${esc(S.region)}</button>`;
+    return;
+  }
   const sc = schoolById(S.schoolId);
   const items = [["센터", S.region, 0], ["과목", S.subject, 1], ["학교", sc?.name, 2], ["학년", `${S.grade}학년`, 3], ["학년도", `${S.year}`, 3]];
   $("crumbs").innerHTML = items.map(([k, v, i], n) => (n ? `<span class="sep">›</span>` : "") + `<button data-i="${i}"><span>${k}</span>${esc(v)}</button>`).join("");
 }
-$("crumbs").onclick = (e) => { const b = e.target.closest("button"); if (!b || !confirmLeave()) return; S.dirty = false; show("vPick"); goStep(Number(b.dataset.i), true); };
+$("crumbs").onclick = (e) => { const b = e.target.closest("button"); if (!b || !confirmLeave()) return; S.dirty = false; if (S.adminOnly) { S.adminOnly = false; $("tabs").classList.remove("hidden"); if (S.tab === "admin") { S.tab = "input"; dropAdmin(); } } show("vPick"); goStep(Number(b.dataset.i), true); };
 function enterMain(){
   S.sem = null; S.term = null; S.exam = null; S.rows = []; S.dirty = false; S.statYear = S.year;
+  S.adminOnly = false; $("tabs").classList.remove("hidden");
+  if (S.tab === "admin") { S.tab = "input"; dropAdmin(); }
   renderCrumbs(); show("vMain"); switchTab(S.tab, true);
 }
+async function openAdmin(){
+  if (S.tab === "input" && !confirmLeave()) return;
+  if (!(await ensureAdmin(adminLabel()))) return;
+  const subs = regionSubjects(S.region, true);
+  if (!subs.includes(S.subject)) S.subject = subs[0] || regionSubjects(S.region)[0];
+  if (!S.level) S.level = "중";
+  const fromPick = !$("vPick").classList.contains("hidden");
+  if (fromPick) { S.adminOnly = true; S.adminBackStep = S.step; $("tabs").classList.add("hidden"); renderCrumbs(); show("vMain"); }
+  switchTab("admin", true);
+}
+$("btnAdmin1").onclick = openAdmin;
+$("btnAdmin2").onclick = () => { if (S.adminOnly) return; if (S.tab === "admin") switchTab("input"); else openAdmin(); };
 $("tabs").onclick = (e) => { const b = e.target.closest("button"); if (b) switchTab(b.dataset.t); };
 function confirmLeave(){ return !S.dirty || confirm("저장하지 않은 내용이 있습니다. 이동할까요?"); }
 async function switchTab(t, force=false){
   if (!force && t !== S.tab && S.tab === "input" && !confirmLeave()) return;
   if (t !== "input") S.dirty = false;
+  if (S.tab === "admin" && t !== "admin") dropAdmin();
   S.tab = t;
   document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.t === t));
+  updateAdminBtns();
   for (const [k, id] of Object.entries({ input:"tInput", report:"tReport", stats:"tStats", list:"tList", admin:"tAdmin" })) {
     const el = $(id); el.classList.toggle("hidden", k !== t);
     if (k === t) { el.classList.remove("panel"); void el.offsetWidth; el.classList.add("panel"); }
@@ -705,7 +778,9 @@ $("btnSave").onclick = () => run($("btnSave"), async () => {
 });
 $("btnExamDelete").onclick = () => run($("btnExamDelete"), async () => {
   if (!S.exam || !confirm("이 시험의 문항과 총평을 모두 삭제할까요? 되돌릴 수 없습니다.")) return;
-  await api("examDelete", { id:S.exam.id }); S.dirty = false; toast("삭제했습니다."); await loadCards("inCards", openEditor);
+  if (!(await ensureAdmin("시험 삭제"))) return;
+  try { await api("examDelete", { id:S.exam.id }); } finally { if (S.tab !== "admin") dropAdmin(); }
+  S.dirty = false; toast("삭제했습니다."); await loadCards("inCards", openEditor);
 });
 $("btnPasteOpen").onclick = () => $("pasteBox").classList.toggle("hidden");
 $("btnPasteClose").onclick = () => $("pasteBox").classList.add("hidden");
@@ -935,16 +1010,18 @@ function renderAdmin(){
   seg($("imSubject"), regionSubjects(), S.subject, (v) => { imSubject = v; resetImport(); });
   $("adCenter").value = regionInfo().center_name || "";
   drawImFiles();
+  loadAdminCounts();
 }
 let adSubjectsDraft = [];
 function drawSubjects(fresh=true){
   if (fresh) adSubjectsDraft = S.subjects.filter((x) => x.region === S.region).map((x) => ({ ...x, saved:true }));
-  $("adSubjects").innerHTML = `<thead><tr><th>과목명</th><th>입력 형식</th><th>순서</th><th>활성 여부</th></tr></thead><tbody>` +
-    adSubjectsDraft.map((x, i) => `<tr data-i="${i}" class="${x.active ? "" : "off"}">
+  $("adSubjects").innerHTML = `<thead><tr><th>과목명</th><th>입력 형식</th><th>순서</th><th>활성 여부</th><th>기록</th><th>삭제</th></tr></thead><tbody>` +
+    adSubjectsDraft.map((x, i) => `<tr data-i="${i}" class="${x.active ? "" : "off"} ${x._del ? "del" : ""}">
       <td>${x.saved ? `<b>${esc(x.name)}</b>` : `<input data-k="name" value="${esc(x.name)}" placeholder="예: 국어" style="width:100%">`}</td>
       <td>${x.saved ? (x.layout === "english" ? "출처·유형형" : "단원·난이도형") : `<select data-k="layout"><option value="basic" ${x.layout !== "english" ? "selected" : ""}>단원·난이도형</option><option value="english" ${x.layout === "english" ? "selected" : ""}>출처·유형형</option></select>`}</td>
       <td><input data-k="sort" type="number" value="${x.sort}" style="width:76px"></td>
-      <td><label class="sw"><input data-k="active" type="checkbox" ${x.active ? "checked" : ""}><i></i><b>${x.active ? "활성" : "비활성"}</b></label></td></tr>`).join("") + "</tbody>";
+      <td><label class="sw"><input data-k="active" type="checkbox" ${x.active ? "checked" : ""}><i></i><b>${x.active ? "활성" : "비활성"}</b></label></td>
+      <td class="muted">${x.saved ? (adCounts.subjects[x.name] || 0) + "건" : "새 과목"}</td><td class="act">${delBtn(adCounts.subjects[x.name] || 0, x.saved)}</td></tr>`).join("") + "</tbody>";
 }
 $("adSubjects").addEventListener("input", (e) => {
   const tr = e.target.closest("tr"); if (!tr || !e.target.dataset.k) return;
@@ -952,26 +1029,54 @@ $("adSubjects").addEventListener("input", (e) => {
   x[k] = k === "active" ? e.target.checked : k === "sort" ? Number(e.target.value) : e.target.value;
   if (k === "active") { tr.classList.toggle("off", !x.active); tr.querySelector(".sw b").textContent = x.active ? "활성" : "비활성"; }
 });
+$("adSubjects").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-a=del]"); if (!b || b.disabled) return;
+  const i = Number(b.closest("tr").dataset.i), x = adSubjectsDraft[i];
+  if (!x.saved) adSubjectsDraft.splice(i, 1); else x._del = !x._del;
+  drawSubjects(false);
+});
 $("btnSubjectAdd").onclick = () => { adSubjectsDraft.push({ name:"", layout:"basic", sort:(adSubjectsDraft.length + 1) * 10, active:true, saved:false }); drawSubjects(false); };
 $("btnSubjectSave").onclick = () => run($("btnSubjectSave"), async () => {
-  const list = adSubjectsDraft.map((x) => ({ ...x, name:String(x.name || "").trim() })).filter((x) => x.name);
+  const dels = adSubjectsDraft.filter((x) => x._del).map((x) => x.name);
+  const list = adSubjectsDraft.filter((x) => !x._del).map((x) => ({ ...x, name:String(x.name || "").trim() })).filter((x) => x.name);
   const names = list.map((x) => x.name);
   if (new Set(names).size !== names.length) throw new Error("같은 이름의 과목이 있습니다.");
   if (!list.some((x) => x.active)) throw new Error("활성 과목이 하나는 있어야 합니다.");
-  const r = await api("saveSubjects", { region:S.region, subjects:list });
+  if (dels.length && !confirm(`${dels.join(", ")} 과목을 삭제할까요? (기록이 없는 과목만 삭제되며, 그 과목의 선택 목록도 함께 지워집니다)`)) return;
+  const r = await api("saveSubjects", { region:S.region, subjects:list, deleteNames:dels });
   S.subjects = r.subjects; S.codes = r.codes;
-  drawSubjects();
+  if (!regionSubjects(S.region, true).includes(S.subject)) S.subject = regionSubjects(S.region, true)[0];
+  drawSubjects(); loadAdminCounts();
   $("adSubj").innerHTML = regionSubjects().map((s) => `<option ${s === S.subject ? "selected" : ""}>${esc(s)}</option>`).join(""); fillCodes();
   seg($("imSubject"), regionSubjects(), imSubject, (v) => { imSubject = v; resetImport(); });
   toast("과목을 저장했습니다.");
 });
+let adCounts = { schools:{}, subjects:{} };
+async function loadAdminCounts(){
+  try {
+    const r = await api("adminCounts", { region:S.region });
+    adCounts = { schools:Object.fromEntries(r.schools.map((x) => [x.id, x.n])), subjects:Object.fromEntries(r.subjects.map((x) => [x.name, x.n])) };
+  } catch { adCounts = { schools:{}, subjects:{} }; }
+  drawSchools(); drawSubjects(false);
+}
+function delBtn(n, saved){
+  if (saved && n > 0) return `<button data-a="del" disabled title="입력된 기록 ${n}건이 있어 삭제할 수 없습니다. 비활성으로 바꾸세요.">✕</button>`;
+  return `<button data-a="del" title="삭제">✕</button>`;
+}
 function drawSchools(){
-  $("adSchools").innerHTML = `<thead><tr><th>학교명</th><th>학교급</th><th>순서</th><th>활성 여부</th></tr></thead><tbody>` +
-    adSchoolsDraft.map((s, i) => `<tr data-i="${i}" class="${s.active ? "" : "off"}"><td><input data-k="name" value="${esc(s.name)}"></td>
+  $("adSchools").innerHTML = `<thead><tr><th>학교명</th><th>학교급</th><th>순서</th><th>활성 여부</th><th>기록</th><th>삭제</th></tr></thead><tbody>` +
+    adSchoolsDraft.map((s, i) => `<tr data-i="${i}" class="${s.active ? "" : "off"} ${s._del ? "del" : ""}"><td><input data-k="name" value="${esc(s.name)}"></td>
       <td><select data-k="level">${LEVELS.map((l) => `<option ${l === s.level ? "selected" : ""}>${l}</option>`).join("")}</select></td>
       <td><input data-k="sort" type="number" value="${s.sort}" style="width:76px"></td>
-      <td><label class="sw"><input data-k="active" type="checkbox" ${s.active ? "checked" : ""}><i></i><b>${s.active ? "활성" : "비활성"}</b></label></td></tr>`).join("") + "</tbody>";
+      <td><label class="sw"><input data-k="active" type="checkbox" ${s.active ? "checked" : ""}><i></i><b>${s.active ? "활성" : "비활성"}</b></label></td>
+      <td class="muted">${s.id ? (adCounts.schools[s.id] || 0) + "건" : "새 학교"}</td><td class="act">${delBtn(adCounts.schools[s.id] || 0, !!s.id)}</td></tr>`).join("") + "</tbody>";
 }
+$("adSchools").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-a=del]"); if (!b || b.disabled) return;
+  const i = Number(b.closest("tr").dataset.i), s = adSchoolsDraft[i];
+  if (!s.id) adSchoolsDraft.splice(i, 1); else s._del = !s._del;
+  drawSchools();
+});
 $("adSchools").addEventListener("input", (e) => {
   const tr = e.target.closest("tr"); if (!tr || !e.target.dataset.k) return;
   const s = adSchoolsDraft[Number(tr.dataset.i)], k = e.target.dataset.k;
@@ -980,8 +1085,10 @@ $("adSchools").addEventListener("input", (e) => {
 });
 $("btnSchoolAdd").onclick = () => { adSchoolsDraft.push({ name:"", level:S.level, sort:500, active:true }); drawSchools(); };
 $("btnSchoolSave").onclick = () => run($("btnSchoolSave"), async () => {
-  const r = await api("saveSchools", { region:S.region, schools:adSchoolsDraft });
-  S.schools = r.schools; adSchoolsDraft = regionSchools().map((s) => ({ ...s })); drawSchools(); toast("학교 목록을 저장했습니다.");
+  const dels = adSchoolsDraft.filter((s) => s._del);
+  if (dels.length && !confirm(`${dels.map((s) => s.name).join(", ")} 학교를 삭제할까요? (기록이 없는 학교만 삭제됩니다)`)) return;
+  const r = await api("saveSchools", { region:S.region, schools:adSchoolsDraft.filter((s) => !s._del), deleteIds:dels.map((s) => s.id) });
+  S.schools = r.schools; adSchoolsDraft = regionSchools().map((s) => ({ ...s })); drawSchools(); toast("학교 목록을 저장했습니다."); loadAdminCounts();
 });
 function fillCodes(){ $("adCodes").value = codesOf($("adKind").value, $("adSubj").value, $("adLevel").value).join("\n"); }
 ["adSubj","adLevel","adKind"].forEach((id) => $(id).onchange = fillCodes);
@@ -1093,7 +1200,7 @@ $("btnImRun").onclick = () => run($("btnImRun"), async () => {
   const b = await api("bootstrap"); S.schools = b.schools; S.codes = b.codes; S.years = b.years; S.regions = b.regions; S.subjects = b.subjects || [];
   adSchoolsDraft = regionSchools().map((s) => ({ ...s })); drawSchools(); fillCodes();
   $("imInfo").textContent = `완료: 시험 ${done}개, 문항 ${qs}개를 가져왔습니다.`; $("btnImRun").disabled = true; imPlan = null;
-  toast("가져오기를 마쳤습니다.");
+  toast("가져오기를 마쳤습니다."); loadAdminCounts();
 });
 
 // ===== 시작 =====
