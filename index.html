@@ -749,7 +749,7 @@ async function openEditor(){
 function renderTable(){
   const cols = layout(S.subject, S.level);
   const units = sortUnits(codesOf("unit"));
-  let h = `<datalist id="dlUnit">${units.map((u) => `<option value="${esc(u)}">`).join("")}</datalist>`;
+  let h = "";
   h += `<thead><tr><th>#</th>${cols.map((c) => `<th class="${FIELD[c].cls || ""}">${FIELD[c].label}</th>`).join("")}<th></th></tr></thead><tbody>`;
   S.rows.forEach((r, i) => {
     h += `<tr data-i="${i}"><td class="idx">${i + 1}</td>`;
@@ -759,7 +759,7 @@ function renderTable(){
         const opts = codesOf(f.code); if (v && !opts.includes(v)) opts.push(v);
         h += `<td><select data-f="${c}"><option value=""></option>${opts.map((o) => `<option ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></td>`;
       } else if (f.free) {
-        h += `<td><input data-f="${c}" list="dlUnit" value="${esc(v)}"></td>`;
+        h += `<td><select data-f="${c}"><option value=""></option>${unitOptions(units, v)}</select></td>`;
       } else {
         h += `<td><input data-f="${c}" value="${esc(v)}"></td>`;
       }
@@ -768,6 +768,13 @@ function renderTable(){
   });
   $("qTable").innerHTML = h + "</tbody>";
   $("inCount").textContent = `총 ${S.rows.length}문항`;
+}
+// 단원 선택: 선택한 학년(예: [중2]) 단원만. 학년 표시가 없는 단원도 함께, 이미 저장된 다른 값은 그대로 보여 줌
+function unitOptions(units, v){
+  const tag = `[${S.level}${S.grade}]`;
+  const list = units.filter((u) => u.startsWith(tag) || !/^\[[^\]]+\]/.test(u));
+  if (v && !list.includes(v)) list.push(v);
+  return list.map((u) => `<option value="${esc(u)}" ${u === v ? "selected" : ""}>${esc(u)}</option>`).join("");
 }
 function sortUnits(list){
   const tag = `[${S.level}${S.grade}]`;
