@@ -50,6 +50,7 @@ h1,h2,h3,h4,p{margin:0}
 .modal h3{margin:0 0 6px}.modal input{width:100%}
 tr.del td{opacity:.45;text-decoration:line-through}
 td.act button:disabled{opacity:.3;cursor:not-allowed}
+#adSchools td,#adSchools th,#adSubjects td,#adSubjects th{white-space:nowrap}
 .adminbtn.on{background:var(--grad);color:#0a0d18;border-color:transparent}.adminbtn.on::before{color:#0a0d18}
 .wtop .steps{margin-right:auto}
 .wtop .adminbtn{margin-left:auto}.wtop .steps+.adminbtn{margin-left:0}
@@ -130,6 +131,11 @@ label.f{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--mu
 .pick .arrow{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line2);transition:all .35s var(--ease)}
 .pick:hover .arrow{background:var(--grad);border-color:transparent;color:#0a0d18;transform:translateX(3px)}
 .region .nm{font-size:34px}
+.pick.locked{filter:grayscale(.8);border-style:dashed;background:rgba(255,255,255,.015)}
+.pick.locked > *{opacity:.38}
+.pick.locked:hover .arrow{background:none;border-color:var(--line2);color:inherit;transform:none}
+.pick.locked:hover{transform:none}
+.pick.locked:hover::before,.pick.locked:hover::after{opacity:0}
 .subj{padding:30px 26px;min-height:230px;display:flex;flex-direction:column}
 .subj .ic{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;font-size:24px;font-weight:800;color:#0a0d18}
 .subj .nm{font-size:34px;margin-top:22px}
@@ -148,6 +154,33 @@ label.f{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--mu
 .emptybox{text-align:center;color:var(--muted);padding:50px 0}
 
 /* ===== 본 화면 ===== */
+.layout{display:grid;grid-template-columns:288px minmax(0,1fr);align-items:start}
+.content{min-width:0}
+.side{position:sticky;top:61px;height:calc(100vh - 61px);overflow:auto;padding:18px 16px 40px;border-right:1px solid var(--line);background:rgba(8,11,20,.4)}
+.side h4{font-size:11px;letter-spacing:.14em;color:var(--muted);margin:20px 4px 8px;font-weight:700}
+.side .center{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;border-radius:16px;background:linear-gradient(135deg,rgba(139,124,255,.16),rgba(69,212,200,.08));border:1px solid var(--line2)}
+.side .center b{font-size:19px;font-weight:800;letter-spacing:-.02em}
+.side .chips{display:flex;flex-wrap:wrap;gap:6px}
+.side .chip{padding:7px 12px;border-radius:10px;background:var(--glass);border:1px solid var(--line);font-size:13px;color:var(--sub)}
+.side .chip:hover{border-color:var(--line2)}
+.side .chip.on{background:linear-gradient(135deg,rgba(139,124,255,.32),rgba(69,212,200,.18));border-color:rgba(139,124,255,.65);color:var(--text);font-weight:700}
+.side .slist{display:flex;flex-direction:column;gap:3px}
+.side .slist.schl{max-height:290px;overflow:auto}
+.side .sitem{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 11px;border-radius:10px;background:transparent;border:1px solid transparent;font-size:13.5px;color:var(--sub);text-align:left}
+.side .sitem:hover{background:var(--glass)}
+.side .sitem.on{background:var(--glass2);border-color:rgba(139,124,255,.55);color:var(--text);font-weight:700}
+.side .sitem small{color:var(--muted);font-size:11px;font-weight:500;white-space:nowrap}
+.side .sitem i{width:7px;height:7px;border-radius:50%;background:var(--line2);display:inline-block;margin-right:8px;vertical-align:middle}
+.side .sitem i.has{background:var(--a2);box-shadow:0 0 8px var(--a2)}
+.side select{width:100%}
+header.top .brand .bt{font-size:15px}
+header.top .crumbs{color:var(--muted);font-size:13px}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .side{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line);padding:14px 16px 18px}
+  .side .slist.schl{max-height:170px}
+  header.top .brand .bt,header.top .crumbs{display:none}
+}
 #vMain{min-height:100vh}
 header.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;padding:14px 28px;background:rgba(8,11,20,.72);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
 .crumbs{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -264,7 +297,7 @@ tr.off td input[data-k="name"]{color:var(--muted)}
     <div class="eyebrow">SCHOOL EXAM ARCHIVE</div>
     <h1>학교내신기록관리</h1>
     <p>센터별 학교 시험 문항 분석 · 통계</p>
-    <input type="password" id="loginPw" placeholder="비밀번호" autocomplete="current-password">
+    <input type="password" id="loginPw" placeholder="센터 비밀번호" autocomplete="current-password">
     <button class="primary" id="btnLogin">들어가기</button>
   </div>
 </section>
@@ -273,32 +306,33 @@ tr.off td input[data-k="name"]{color:var(--muted)}
 <section id="vPick" class="hidden">
   <div class="wtop">
     <div class="brand"><span class="mk">내</span>학교내신기록관리</div>
-    <div class="steps" id="steps"></div>
-    <button class="adminbtn hidden" id="btnAdmin1"></button>
+    <span class="spacer"></span>
     <button class="ghost small" id="btnLogout1">로그아웃</button>
   </div>
   <div class="stage" id="stage"></div>
 </section>
 
-<!-- 관리자 비밀번호 -->
-<div id="admModal" class="modal hidden">
+<!-- 안내 창 -->
+<div id="ntModal" class="modal hidden">
   <div class="mbox">
-    <h3>관리자 비밀번호</h3>
-    <p class="muted" id="admWhy" style="margin:0 0 12px"></p>
-    <input type="password" id="admPw" placeholder="관리자 비밀번호" autocomplete="off">
-    <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="ghost" id="admCancel">취소</button><button class="primary" id="admOk">확인</button></div>
+    <h3 id="ntTitle"></h3>
+    <p class="muted" id="ntMsg" style="margin:6px 0 0;line-height:1.6"></p>
+    <div class="row" style="margin-top:18px;justify-content:flex-end"><button class="primary" id="ntOk">확인</button></div>
   </div>
 </div>
 
 <!-- 본 화면 -->
 <section id="vMain" class="hidden">
   <header class="top">
-    <div class="brand"><span class="mk">내</span></div>
+    <div class="brand"><span class="mk">내</span><span class="bt">학교내신기록관리</span></div>
     <div class="crumbs" id="crumbs"></div>
     <span class="spacer"></span>
     <button class="adminbtn" id="btnAdmin2"></button>
     <button class="ghost small" id="btnLogout2">로그아웃</button>
   </header>
+  <div class="layout">
+  <aside class="side" id="side"></aside>
+  <div class="content">
   <nav class="tabs" id="tabs">
     <button data-t="input" class="on">문항 입력</button>
     <button data-t="report">1장 보고서</button>
@@ -308,7 +342,6 @@ tr.off td input[data-k="name"]{color:var(--muted)}
   <main>
     <!-- 입력 -->
     <div id="tInput" class="panel">
-      <div class="exam-cards" id="inCards"></div>
       <div id="inEditor" class="hidden">
         <div class="ptitle">
           <h2 id="inTitle"></h2><span class="muted" id="inMeta"></span>
@@ -334,12 +367,11 @@ tr.off td input[data-k="name"]{color:var(--muted)}
           <label class="f">문항 분석 총평<textarea id="inComment" rows="8"></textarea></label>
         </div>
       </div>
-      <p class="empty" id="inHint">위에서 학기·시험을 고르세요.</p>
+      <p class="empty" id="inHint">왼쪽에서 시험(학기·중간/기말)을 고르세요.</p>
     </div>
 
     <!-- 1장 보고서 -->
     <div id="tReport" class="panel hidden">
-      <div class="exam-cards" id="rpCards"></div>
       <div class="row" style="margin-bottom:14px"><span class="spacer"></span><button class="primary" id="btnPrint">인쇄 / PDF 저장</button></div>
       <div id="reportPaper" class="paper"></div>
     </div>
@@ -405,13 +437,15 @@ tr.off td input[data-k="name"]{color:var(--muted)}
           <div class="row"><input id="adCenter" style="flex:1" placeholder="1장 보고서 오른쪽 위에 표시"><button class="primary" id="btnCenterSave">저장</button></div>
         </div>
         <div class="card">
-          <h3>통합 비밀번호 변경 <small>모든 센터 공통</small></h3>
+          <h3 id="pwTitle">센터 비밀번호 변경</h3>
           <div class="row"><input type="password" id="pwNew" placeholder="새 비밀번호(8자 이상)" style="flex:1" autocomplete="new-password"><button class="primary" id="btnPwSave">변경</button></div>
-          <p class="muted" style="font-size:12px;margin-top:8px">바꾸면 지금 이 화면을 뺀 다른 접속은 모두 로그아웃됩니다.</p>
+          <p class="muted" style="font-size:12px;margin-top:8px">이 센터 비밀번호만 바뀝니다. 바꾸면 이 센터 비밀번호로 접속 중인 사람은 로그아웃됩니다. 관리자 비밀번호는 그대로입니다.</p>
         </div>
       </div>
     </div>
   </main>
+  </div>
+  </div>
 </section>
 
 <script>
@@ -420,8 +454,8 @@ tr.off td input[data-k="name"]{color:var(--muted)}
 const DEFAULT_API = "https://xphtctpbysbbdyjaxidh.supabase.co/functions/v1/naesin";
 const API = new URLSearchParams(location.search).get("api") || DEFAULT_API;
 const LEVELS = ["중","고"];
-const REGION_EN = { 송도:"SONGDO", 한강:"HANGANG", 청라:"CHEONGNA", 산본:"SANBON", 세종:"SEJONG" };
-const REGION_DESC = { 송도:"인천 송도국제도시", 한강:"김포 한강신도시", 청라:"인천 청라국제도시", 산본:"군포 산본신도시", 세종:"세종 · 연세" };
+const REGION_EN = { 송도:"SONGDO", 한강:"HANGANG", 청라:"CHEONGNA", 산본:"SANBON", 세종:"SEJONG", 배곧:"BAEGOT" };
+const REGION_DESC = { 송도:"인천 송도국제도시", 한강:"김포 한강신도시", 청라:"인천 청라국제도시", 산본:"군포 산본신도시", 세종:"세종 · 연세", 배곧:"시흥 배곧신도시" };
 const SUBJ_STYLE = { 수학:{ ic:"∑", bg:"linear-gradient(135deg,#a78bfa,#818cf8)", en:"MATHEMATICS" }, 과학:{ ic:"⚛", bg:"linear-gradient(135deg,#5eead4,#38bdf8)", en:"SCIENCE" }, 영어:{ ic:"A", bg:"linear-gradient(135deg,#fcd34d,#f59e0b)", en:"ENGLISH" },
   국어:{ ic:"가", bg:"linear-gradient(135deg,#f9a8d4,#f472b6)", en:"KOREAN" }, 사회:{ ic:"◎", bg:"linear-gradient(135deg,#86efac,#22c55e)", en:"SOCIAL STUDIES" }, 역사:{ ic:"史", bg:"linear-gradient(135deg,#fdba74,#ea580c)", en:"HISTORY" } };
 const EXTRA_BG = ["linear-gradient(135deg,#93c5fd,#6366f1)","linear-gradient(135deg,#fca5a5,#ef4444)","linear-gradient(135deg,#c4b5fd,#a855f7)","linear-gradient(135deg,#67e8f9,#0891b2)"];
@@ -525,148 +559,161 @@ $("btnLogout1").onclick = logout; $("btnLogout2").onclick = logout;
 
 async function afterLogin(){
   const r = await api("bootstrap");
-  S.role = r.role; if (S.role === "owner") dropAdmin();
+  S.role = r.role; S.myRegion = r.region || null;
   S.regions = r.regions; S.schools = r.schools; S.codes = r.codes; S.years = r.years;
   // 서버가 아직 과목 기능 전 버전이면 기본 3과목으로 표시
   S.subjects = r.subjects || S.regions.flatMap((g) => [["수학","basic",10],["과학","basic",20],["영어","english",30]].map(([name, layout, sort]) => ({ region:g.name, name, layout, sort, active:true })));
   const last = store.get("pick");
   if (last && S.regions.some((x) => x.name === last.region)) Object.assign(S, last);
+  if (S.role !== "owner" && S.myRegion && S.region !== S.myRegion) { S.region = S.myRegion; S.schoolId = null; S.sem = null; S.term = null; }
   if (!S.year) S.year = currentSchoolYear();
-  show("vPick"); goStep(0);
+  goPick();
 }
 
-// ===== 단계 선택 (센터 → 과목 → 학교 → 학년) =====
-const STEP_NAMES = ["센터","과목","학교","학년"];
-function renderSteps(){
-  const vals = [S.region, S.subject, schoolById(S.schoolId)?.name, S.grade ? S.grade + "학년" : null];
-  $("steps").innerHTML = STEP_NAMES.map((n, i) => {
-    const cls = i < S.step ? "done" : i === S.step ? "now" : "";
-    const v = i < S.step && vals[i] ? `<b>${esc(vals[i])}</b>` : "";
-    return (i ? `<span class="bar"></span>` : "") + `<button class="st ${cls}" data-i="${i}" ${i < S.step ? "" : "disabled"}><i>${i < S.step ? "✓" : i + 1}</i><span>${n}</span>${v}</button>`;
-  }).join("");
-}
-$("steps").onclick = (e) => { const b = e.target.closest(".st.done"); if (b) goStep(Number(b.dataset.i), true); };
-// ===== 관리자 비밀번호 확인 =====
-function ensureAdmin(why){
-  if (S.role === "owner") return Promise.resolve(true);
-  return new Promise((resolve) => {
-    $("admWhy").textContent = `${why}에는 관리자 비밀번호가 필요합니다.`;
-    $("admPw").value = ""; $("admModal").classList.remove("hidden"); setTimeout(() => $("admPw").focus(), 30);
-    const close = (v) => { $("admModal").classList.add("hidden"); $("admOk").onclick = $("admCancel").onclick = $("admPw").onkeydown = null; resolve(v); };
-    $("admCancel").onclick = () => close(false);
-    $("admPw").onkeydown = (e) => { if (e.key === "Enter") $("admOk").click(); if (e.key === "Escape") close(false); };
-    $("admOk").onclick = () => run($("admOk"), async () => {
-      const r = await api("adminLogin", { password:$("admPw").value });
-      S.role = r.role; close(true);
-    });
-  });
-}
-function dropAdmin(){ if (S.role === "owner") { S.role = "teacher"; api("adminLogout").catch(() => {}); } }
-function adminLabel(){ return `${S.region}센터 관리`; }
-function updateAdminBtns(){
-  $("btnAdmin1").textContent = adminLabel(); $("btnAdmin1").classList.toggle("hidden", !(S.step >= 1 && S.region));
-  $("btnAdmin2").textContent = adminLabel(); $("btnAdmin2").classList.toggle("on", S.tab === "admin");
-}
-function goStep(i, back=false){
-  S.step = i; renderSteps(); updateAdminBtns();
-  const st = $("stage"); const el = document.createElement("div"); el.className = "step" + (back ? " back" : "");
-  st.innerHTML = ""; st.appendChild(el);
-  [stepRegion, stepSubject, stepSchool, stepGrade][i](el);
-}
+// ===== 센터 선택 (첫 화면) =====
 const stagger = (i) => `style="animation-delay:${80 + i * 60}ms"`;
 const arrow = `<span class="arrow">→</span>`;
-
+function showNotice(title, msg){ $("ntTitle").textContent = title; $("ntMsg").textContent = msg; $("ntModal").classList.remove("hidden"); }
+$("ntOk").onclick = () => $("ntModal").classList.add("hidden");
+function goPick(){
+  show("vPick");
+  const st = $("stage"); const el = document.createElement("div"); el.className = "step back";
+  st.innerHTML = ""; st.appendChild(el); stepRegion(el);
+}
 function stepRegion(el){
-  el.innerHTML = `<div class="qhead"><div class="eyebrow">STEP 01</div><h2>어느 <span class="gradtext">센터</span>인가요?</h2><p>센터마다 학교 목록과 기록이 따로 관리됩니다.</p></div>
-    <div class="grid g5">${S.regions.map((r, i) => {
+  el.innerHTML = `<div class="qhead"><div class="eyebrow">CENTER</div><h2>어느 <span class="gradtext">센터</span>인가요?</h2><p>센터마다 학교 목록과 기록이 따로 관리됩니다.</p></div>
+    <div class="grid g3">${S.regions.map((r, i) => {
+      const open = canOpen(r.name);
       const n = regionSchools(r.name).filter((s) => s.active).length;
-      return `<button class="pick region ${r.name === S.region ? "sel" : ""}" data-v="${esc(r.name)}" ${stagger(i)}>
+      return `<button class="pick region ${r.name === S.region && open ? "sel" : ""} ${open ? "" : "locked"}" data-v="${esc(r.name)}" ${stagger(i)}>
         <div class="en">${REGION_EN[r.name] || "CENTER"}</div><div class="nm">${esc(r.name)}</div><div class="ds">${esc(REGION_DESC[r.name] || r.center_name || "")}</div>
-        <div class="ft"><span>학교 ${n}곳</span>${arrow}</div></button>`; }).join("")}</div>`;
+        <div class="ft"><span>${open ? `학교 ${n}곳` : "🔒 다른 센터"}</span>${arrow}</div></button>`; }).join("")}</div>
+    ${S.role === "owner" ? `<p class="muted" style="text-align:center;margin-top:22px">관리자로 접속했습니다 · 모든 센터를 열 수 있습니다</p>` : `<p class="muted" style="text-align:center;margin-top:22px">${esc(S.myRegion)}센터 비밀번호로 접속했습니다</p>`}`;
   el.onclick = (e) => { const b = e.target.closest(".pick"); if (!b) return;
-    if (S.region !== b.dataset.v) { S.schoolId = null; }
-    S.region = b.dataset.v; savePick(); goStep(1); };
+    if (!canOpen(b.dataset.v)) { showNotice(`${b.dataset.v}센터`, `${b.dataset.v}센터 비밀번호가 아닙니다. 지금은 ${S.myRegion}센터 비밀번호로 접속해 있어 ${b.dataset.v}센터에는 들어갈 수 없습니다. ${b.dataset.v}센터를 보려면 로그아웃 후 ${b.dataset.v}센터 비밀번호로 다시 들어오세요.`); return; }
+    if (S.region !== b.dataset.v) { S.schoolId = null; S.sem = null; S.term = null; }
+    S.region = b.dataset.v; fixPick(); savePick(); enterMain(); };
 }
-function stepSubject(el){
-  el.innerHTML = `<div class="qhead"><div class="eyebrow">STEP 02 · ${esc(S.region)}</div><h2><span class="gradtext">과목</span>을 선택하세요</h2></div>
-    <div class="grid gsub">${regionSubjects(S.region, true).map((s, i) => `<button class="pick subj ${s === S.subject ? "sel" : ""}" data-v="${esc(s)}" ${stagger(i)}>
-      <div class="ic" style="background:${subjStyle(s, i).bg}">${esc(subjStyle(s, i).ic)}</div>
-      <div class="nm">${esc(s)}</div><div class="en">${subjStyle(s, i).en}</div>
-      <div class="ft"><span>문항 분석 · 통계</span>${arrow}</div></button>`).join("")}</div>
-    <div class="under"><button class="ghost" id="bk">← 센터 다시 고르기</button></div>`;
-  el.querySelector("#bk").onclick = () => goStep(0, true);
-  el.onclick = (e) => { const b = e.target.closest(".pick"); if (!b) return; S.subject = b.dataset.v; savePick(); goStep(2); };
-}
-async function stepSchool(el){
-  const list = regionSchools().filter((s) => s.active);
-  const hasHigh = list.some((s) => s.level === "고");
-  if (!hasHigh) S.level = "중";
-  el.innerHTML = `<div class="qhead"><div class="eyebrow">STEP 03 · ${esc(S.region)} · ${esc(S.subject)}</div><h2><span class="gradtext">학교</span>를 선택하세요</h2></div>
-    <div class="yearbar">${hasHigh ? `<div class="seg" id="lv"></div>` : ""}</div>
-    <div class="grid gsch" id="schGrid"></div>
-    <div class="under"><button class="ghost" id="bk">← 과목 다시 고르기</button></div>`;
-  el.querySelector("#bk").onclick = () => goStep(1, true);
-  if (hasHigh) seg(el.querySelector("#lv"), LEVELS, S.level, (v) => { S.level = v; draw(); }, (v) => v + "학교");
-  let sum = {};
-  const draw = () => {
-    const xs = list.filter((s) => s.level === S.level);
-    el.querySelector("#schGrid").innerHTML = xs.length ? xs.map((s, i) => {
-      const m = sum[s.id];
-      return `<button class="pick sch ${s.id === S.schoolId ? "sel" : ""}" data-id="${s.id}" ${stagger(i)}><div class="nm">${esc(s.name)}</div>
-        <span class="badge ${m ? "has" : ""}"><i></i>${m ? `기록 ${m.exams}건 · 최근 ${m.last_year}` : "기록 없음"}</span></button>`; }).join("")
-      : `<div class="emptybox" style="grid-column:1/-1">이 센터에 등록된 학교가 없습니다. 센터 관리에서 추가할 수 있어요.</div>`;
-  };
-  draw();
-  el.onclick = (e) => { const b = e.target.closest(".pick.sch"); if (!b) return; S.schoolId = Number(b.dataset.id); S.level = schoolById(S.schoolId).level; savePick(); goStep(3); };
-  try { const r = await api("schoolSummary", { region:S.region, subject:S.subject }); r.summary.forEach((x) => sum[x.school_id] = x); draw(); } catch {}
-}
-function stepGrade(el){
-  const sc = schoolById(S.schoolId);
-  el.innerHTML = `<div class="qhead"><div class="eyebrow">STEP 04 · ${esc(S.region)} · ${esc(S.subject)} · ${esc(sc?.name)}</div><h2><span class="gradtext">학년도</span>와 <span class="gradtext">학년</span></h2></div>
-    <div class="yearbar"><div class="seg" id="yr"></div></div>
-    <div class="grid g3">${[1,2,3].map((g, i) => `<button class="pick grade ${g === S.grade ? "sel" : ""}" data-g="${g}" ${stagger(i)}>
-      <div class="en">GRADE</div><div class="nm">${g}</div><div class="ds">${sc?.level === "고" ? "고" : "중"}${g} · ${S.year}학년도</div></button>`).join("")}</div>
-    <div class="under"><button class="ghost" id="bk">← 학교 다시 고르기</button></div>`;
-  el.querySelector("#bk").onclick = () => goStep(2, true);
-  seg(el.querySelector("#yr"), yearOptions(), S.year, (v) => { S.year = Number(v); savePick(); el.querySelectorAll(".grade .ds").forEach((d, i) => d.textContent = `${sc?.level === "고" ? "고" : "중"}${i + 1} · ${S.year}학년도`); }, (v) => v + "학년도");
-  el.onclick = (e) => { const b = e.target.closest(".pick.grade"); if (!b) return; S.grade = Number(b.dataset.g); savePick(); enterMain(); };
+function canOpen(region){ return S.role === "owner" || region === S.myRegion; }
+// 센터에 맞게 과목·학교·학년 기본값 맞추기
+function fixPick(){
+  const subs = regionSubjects(S.region, true);
+  if (!subs.includes(S.subject)) S.subject = subs[0] || null;
+  const act = regionSchools().filter((s) => s.active);
+  let sc = schoolById(S.schoolId);
+  if (!sc || sc.region !== S.region || !sc.active) sc = act.find((s) => s.level === S.level) || act[0] || null;
+  S.schoolId = sc ? sc.id : null; if (sc) S.level = sc.level;
+  if (![1,2,3].includes(Number(S.grade))) S.grade = 1;
+  if (!S.year) S.year = currentSchoolYear();
 }
 
-// ===== 본 화면 =====
+// ===== 본 화면: 상단·사이드바 =====
+function adminLabel(){ return `${S.region}센터 관리`; }
+function updateAdminBtns(){ $("btnAdmin2").textContent = adminLabel(); $("btnAdmin2").classList.toggle("on", S.tab === "admin"); }
 function renderCrumbs(){
-  if (S.adminOnly) {
-    $("crumbs").innerHTML = `<button data-i="${S.adminBackStep ?? 1}"><span>←</span>선택 화면으로</button><span class="sep">›</span><button data-i="0"><span>센터</span>${esc(S.region)}</button>`;
-    return;
-  }
   const sc = schoolById(S.schoolId);
-  const items = [["센터", S.region, 0], ["과목", S.subject, 1], ["학교", sc?.name, 2], ["학년", `${S.grade}학년`, 3], ["학년도", `${S.year}`, 3]];
-  $("crumbs").innerHTML = items.map(([k, v, i], n) => (n ? `<span class="sep">›</span>` : "") + `<button data-i="${i}"><span>${k}</span>${esc(v)}</button>`).join("");
+  $("crumbs").textContent = [`${S.region}센터`, S.subject, sc ? `${sc.name} ${S.grade}학년` : null, `${S.year}학년도`].filter(Boolean).join("  ·  ");
+  updateAdminBtns();
 }
-$("crumbs").onclick = (e) => { const b = e.target.closest("button"); if (!b || !confirmLeave()) return; S.dirty = false; if (S.adminOnly) { S.adminOnly = false; $("tabs").classList.remove("hidden"); if (S.tab === "admin") { S.tab = "input"; dropAdmin(); } } show("vPick"); goStep(Number(b.dataset.i), true); };
-function enterMain(){
-  S.sem = null; S.term = null; S.exam = null; S.rows = []; S.dirty = false; S.statYear = S.year;
-  S.adminOnly = false; $("tabs").classList.remove("hidden");
-  if (S.tab === "admin") { S.tab = "input"; dropAdmin(); }
-  renderCrumbs(); show("vMain"); switchTab(S.tab, true);
-}
-async function openAdmin(){
-  if (S.tab === "input" && !confirmLeave()) return;
-  if (!(await ensureAdmin(adminLabel()))) return;
+let sideSum = {};
+function renderSide(){
   const subs = regionSubjects(S.region, true);
-  if (!subs.includes(S.subject)) S.subject = subs[0] || regionSubjects(S.region)[0];
-  if (!S.level) S.level = "중";
-  const fromPick = !$("vPick").classList.contains("hidden");
-  if (fromPick) { S.adminOnly = true; S.adminBackStep = S.step; $("tabs").classList.add("hidden"); renderCrumbs(); show("vMain"); }
-  switchTab("admin", true);
+  const act = regionSchools().filter((s) => s.active);
+  const lvls = LEVELS.filter((l) => act.some((s) => s.level === l));
+  const sch = act.filter((s) => s.level === S.level);
+  $("side").innerHTML = `
+    <div class="center"><div><div class="eyebrow" style="font-size:10px">${REGION_EN[S.region] || "CENTER"}</div><b>${esc(S.region)}센터</b></div><button class="ghost small" data-act="center">센터 변경</button></div>
+    <h4>과목</h4><div class="chips">${subs.map((x) => `<button class="chip ${x === S.subject ? "on" : ""}" data-act="subject" data-v="${esc(x)}">${esc(x)}</button>`).join("") || `<span class="muted">활성 과목이 없습니다</span>`}</div>
+    <h4>학년도</h4><select id="sdYear">${yearOptions().map((y) => `<option value="${y}" ${y === S.year ? "selected" : ""}>${y}학년도</option>`).join("")}</select>
+    ${lvls.length > 1 ? `<h4>학교급</h4><div class="chips">${lvls.map((l) => `<button class="chip ${l === S.level ? "on" : ""}" data-act="level" data-v="${l}">${l}학교</button>`).join("")}</div>` : ""}
+    <h4>학교</h4><div class="slist schl">${sch.map((x) => { const m = sideSum[x.id];
+      return `<button class="sitem ${x.id === S.schoolId ? "on" : ""}" data-act="school" data-v="${x.id}"><span><i class="${m ? "has" : ""}"></i>${esc(x.name)}</span><small>${m ? m.exams + "건" : ""}</small></button>`; }).join("")
+      || `<span class="muted" style="padding:6px 4px">등록된 학교가 없습니다</span>`}</div>
+    <h4>학년</h4><div class="chips">${[1,2,3].map((g) => `<button class="chip ${g === S.grade ? "on" : ""}" data-act="grade" data-v="${g}">${g}학년</button>`).join("")}</div>
+    <h4>시험</h4><div class="slist" id="sdExams"></div>`;
+  $("sdYear").onchange = (e) => { if (!confirmLeave()) { e.target.value = S.year; return; } S.year = Number(e.target.value); S.statYear = S.year; afterPickChange(); };
+  renderExamList();
+  const on = $("side").querySelector(".slist.schl .on"); if (on) on.scrollIntoView({ block:"nearest" });
 }
-$("btnAdmin1").onclick = openAdmin;
-$("btnAdmin2").onclick = () => { if (S.adminOnly) return; if (S.tab === "admin") switchTab("input"); else openAdmin(); };
+$("side").onclick = (e) => {
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  const a = b.dataset.act, v = b.dataset.v;
+  if (a === "exam") { pickExam(Number(b.dataset.s), b.dataset.t); return; }
+  if (!confirmLeave()) return;
+  if (a === "center") { S.dirty = false; goPick(); return; }
+  if (a === "subject") S.subject = v;
+  if (a === "level") { S.level = v; const f = regionSchools().find((x) => x.active && x.level === v); S.schoolId = f ? f.id : null; }
+  if (a === "school") { S.schoolId = Number(v); S.level = schoolById(S.schoolId).level; }
+  if (a === "grade") S.grade = Number(v);
+  afterPickChange(a === "subject");
+};
+async function afterPickChange(subjChanged=false){
+  S.dirty = false; S.exam = null; savePick(); renderCrumbs(); renderSide();
+  if (subjChanged) loadSideSummary();
+  await refreshTab();
+}
+async function loadSideSummary(){
+  sideSum = {};
+  if (S.subject) { try { const r = await api("schoolSummary", { region:S.region, subject:S.subject }); r.summary.forEach((x) => sideSum[x.school_id] = x); } catch {} }
+  renderSide();
+}
+async function loadExams(){
+  if (!S.schoolId || !S.subject) { S.examList = []; renderExamList(); return; }
+  try {
+    const r = await api("examList", { year:S.year, subject:S.subject, region:S.region, school_id:S.schoolId, grade:S.grade });
+    S.examList = r.exams;
+  } catch(e) { toast(e.message, true); S.examList = []; }
+  renderExamList();
+}
+function renderExamList(){
+  const el = $("sdExams"); if (!el) return;
+  el.innerHTML = EXAMS4.map(([s, t]) => {
+    const ex = (S.examList || []).find((x) => x.semester === s && x.term === t);
+    const on = S.sem === s && S.term === t ? "on" : "";
+    return `<button class="sitem ${on}" data-act="exam" data-s="${s}" data-t="${t}"><span><i class="${ex ? "has" : ""}"></i>${examLabel(s, t)}</span><small>${ex ? ex.n + "문항" + (ex.has_comment ? " · 총평" : "") : "기록 없음"}</small></button>`;
+  }).join("");
+}
+function pickExam(s, t){
+  if (S.tab === "input" && !confirmLeave()) return;
+  S.dirty = false; S.sem = s; S.term = t; renderExamList();
+  if (S.tab === "report") openReport(); else if (S.tab === "input") openEditor(); else switchTab("input");
+}
+function showExamArea(){
+  if (S.tab === "input") {
+    if (S.sem && S.schoolId && S.subject) openEditor();
+    else { $("inEditor").classList.add("hidden"); $("inHint").classList.remove("hidden");
+      $("inHint").textContent = !S.subject ? "이 센터에 활성 과목이 없습니다." : !S.schoolId ? "이 센터에 활성 학교가 없습니다." : "왼쪽에서 시험(학기·중간/기말)을 고르세요."; }
+  }
+  if (S.tab === "report") {
+    if (S.sem && S.schoolId && S.subject) openReport();
+    else $("reportPaper").innerHTML = `<p style="color:#666">왼쪽에서 시험(학기·중간/기말)을 고르세요.</p>`;
+  }
+}
+async function refreshTab(){
+  await loadExams();
+  const t = S.tab;
+  if (t === "input" || t === "report") showExamArea();
+  if (t === "stats") renderStatsShell();
+  if (t === "list") loadList();
+  if (t === "admin") renderAdmin();
+}
+async function enterMain(){
+  S.exam = null; S.rows = []; S.dirty = false; S.statYear = S.year;
+  if (S.tab === "admin" && S.role !== "owner") S.tab = "input";
+  renderCrumbs(); show("vMain"); renderSide(); loadSideSummary();
+  await loadExams();
+  switchTab(S.tab, true);
+}
+function openAdmin(){
+  if (S.role !== "owner") { showNotice(adminLabel(), "센터 관리는 관리자만 사용할 수 있습니다. 관리자에게 문의하세요."); return; }
+  if (S.tab === "admin") switchTab("input"); else switchTab("admin");
+}
+$("btnAdmin2").onclick = openAdmin;
 $("tabs").onclick = (e) => { const b = e.target.closest("button"); if (b) switchTab(b.dataset.t); };
 function confirmLeave(){ return !S.dirty || confirm("저장하지 않은 내용이 있습니다. 이동할까요?"); }
 async function switchTab(t, force=false){
   if (!force && t !== S.tab && S.tab === "input" && !confirmLeave()) return;
   if (t !== "input") S.dirty = false;
-  if (S.tab === "admin" && t !== "admin") dropAdmin();
   S.tab = t;
   document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.t === t));
   updateAdminBtns();
@@ -674,33 +721,13 @@ async function switchTab(t, force=false){
     const el = $(id); el.classList.toggle("hidden", k !== t);
     if (k === t) { el.classList.remove("panel"); void el.offsetWidth; el.classList.add("panel"); }
   }
-  if (t === "input") await loadCards("inCards", openEditor);
-  if (t === "report") await loadCards("rpCards", openReport);
+  if (t === "input" || t === "report") showExamArea();
   if (t === "stats") renderStatsShell();
   if (t === "list") loadList();
   if (t === "admin") renderAdmin();
 }
 window.addEventListener("beforeunload", (e) => { if (S.dirty) { e.preventDefault(); e.returnValue = ""; } });
 
-async function loadCards(elId, onOpen){
-  const el = $(elId);
-  el.innerHTML = EXAMS4.map(([s,t]) => `<button class="exam-card" data-s="${s}" data-t="${t}"><b>${examLabel(s,t)}</b><small>불러오는 중…</small></button>`).join("");
-  try {
-    const r = await api("examList", { year:S.year, subject:S.subject, region:S.region, school_id:S.schoolId, grade:S.grade });
-    S.examList = r.exams;
-  } catch(e) { toast(e.message, true); S.examList = []; }
-  el.innerHTML = EXAMS4.map(([s,t]) => {
-    const ex = S.examList.find((x) => x.semester === s && x.term === t);
-    const on = S.sem === s && S.term === t ? "on" : "";
-    const info = ex ? `${ex.n}문항${ex.has_comment ? " · 총평" : ""}${ex.author ? " · " + esc(ex.author) : ""}` : "기록 없음";
-    return `<button class="exam-card ${on}" data-s="${s}" data-t="${t}"><span class="dot ${ex ? "has" : ""}"></span><b>${examLabel(s,t)}</b><small>${info}</small></button>`;
-  }).join("");
-  el.onclick = (e) => { const b = e.target.closest(".exam-card"); if (!b) return;
-    if (elId === "inCards" && !confirmLeave()) return;
-    S.sem = Number(b.dataset.s); S.term = b.dataset.t;
-    el.querySelectorAll(".exam-card").forEach((x) => x.classList.toggle("on", x === b)); onOpen(); };
-  if (S.sem) onOpen();
-}
 const keyArgs = () => ({ year:S.year, subject:S.subject, school_id:S.schoolId, grade:S.grade, semester:S.sem, term:S.term });
 
 // ===== 문항 입력 =====
@@ -714,7 +741,7 @@ async function openEditor(){
     S.exam = r.exam; S.rows = r.questions.map((q) => ({ ...q }));
     $("inAuthor").value = r.exam?.author || ""; $("inComment").value = r.exam?.comment || ""; $("inMemo").value = r.exam?.memo || "";
     $("inMeta").textContent = r.exam ? `${S.year}학년도 · ${S.subject} · 마지막 저장 ${new Date(r.exam.updated_at).toLocaleString("ko-KR")} (${r.exam.updated_by})` : `${S.year}학년도 · ${S.subject} · 새 시험`;
-    $("btnExamDelete").classList.toggle("hidden", !r.exam);
+    $("btnExamDelete").classList.toggle("hidden", !r.exam || S.role !== "owner");
     if (!S.rows.length) addRows(5, false);
     S.dirty = false; renderTable();
   } catch(e) { toast(e.message, true); $("inMeta").textContent = ""; }
@@ -774,13 +801,13 @@ $("btnAdd5").onclick = () => addRows(5);
 ["inAuthor","inComment","inMemo"].forEach((id) => $(id).addEventListener("input", () => S.dirty = true));
 $("btnSave").onclick = () => run($("btnSave"), async () => {
   const r = await api("examSave", { ...keyArgs(), author:$("inAuthor").value, comment:$("inComment").value, memo:$("inMemo").value, questions:S.rows });
-  S.dirty = false; toast(`저장했습니다. (${r.n}문항)`); await loadCards("inCards", openEditor);
+  S.dirty = false; toast(`저장했습니다. (${r.n}문항)`); await loadExams(); loadSideSummary(); await openEditor();
 });
 $("btnExamDelete").onclick = () => run($("btnExamDelete"), async () => {
   if (!S.exam || !confirm("이 시험의 문항과 총평을 모두 삭제할까요? 되돌릴 수 없습니다.")) return;
-  if (!(await ensureAdmin("시험 삭제"))) return;
-  try { await api("examDelete", { id:S.exam.id }); } finally { if (S.tab !== "admin") dropAdmin(); }
-  S.dirty = false; toast("삭제했습니다."); await loadCards("inCards", openEditor);
+  if (S.role !== "owner") { showNotice("시험 삭제", "시험 삭제는 관리자만 할 수 있습니다. 관리자에게 문의하세요."); return; }
+  await api("examDelete", { id:S.exam.id });
+  S.dirty = false; toast("삭제했습니다."); await loadExams(); loadSideSummary(); await openEditor();
 });
 $("btnPasteOpen").onclick = () => $("pasteBox").classList.toggle("hidden");
 $("btnPasteClose").onclick = () => $("pasteBox").classList.add("hidden");
@@ -991,13 +1018,14 @@ $("lsTable").onclick = (e) => {
   const tr = e.target.closest("tr.click"); if (!tr) return;
   S.schoolId = Number(tr.dataset.s); S.grade = Number(tr.dataset.g); S.sem = Number(tr.dataset.sem); S.term = tr.dataset.t;
   const sc = schoolById(S.schoolId); if (sc) S.level = sc.level;
-  savePick(); renderCrumbs(); switchTab("report");
+  S.dirty = false; savePick(); renderCrumbs(); renderSide(); loadExams().then(() => switchTab("report"));
 };
 
 // ===== 센터 관리 =====
 let adSchoolsDraft = [];
 function renderAdmin(){
   $("adTitle").innerHTML = `<span class="gradtext">${esc(S.region)}</span> 센터 관리`;
+  $("pwTitle").innerHTML = `${esc(S.region)}센터 비밀번호 변경`;
   $("imRegionNote").textContent = `→ ${S.region} 센터로 들어갑니다`;
   adSchoolsDraft = regionSchools().map((s) => ({ ...s })).sort((a, b) => (b.active - a.active) || (a.level < b.level) - (a.level > b.level) || a.sort - b.sort);
   drawSchools();
@@ -1046,7 +1074,7 @@ $("btnSubjectSave").onclick = () => run($("btnSubjectSave"), async () => {
   const r = await api("saveSubjects", { region:S.region, subjects:list, deleteNames:dels });
   S.subjects = r.subjects; S.codes = r.codes;
   if (!regionSubjects(S.region, true).includes(S.subject)) S.subject = regionSubjects(S.region, true)[0];
-  drawSubjects(); loadAdminCounts();
+  drawSubjects(); loadAdminCounts(); fixPick(); renderSide(); renderCrumbs();
   $("adSubj").innerHTML = regionSubjects().map((s) => `<option ${s === S.subject ? "selected" : ""}>${esc(s)}</option>`).join(""); fillCodes();
   seg($("imSubject"), regionSubjects(), imSubject, (v) => { imSubject = v; resetImport(); });
   toast("과목을 저장했습니다.");
@@ -1088,7 +1116,7 @@ $("btnSchoolSave").onclick = () => run($("btnSchoolSave"), async () => {
   const dels = adSchoolsDraft.filter((s) => s._del);
   if (dels.length && !confirm(`${dels.map((s) => s.name).join(", ")} 학교를 삭제할까요? (기록이 없는 학교만 삭제됩니다)`)) return;
   const r = await api("saveSchools", { region:S.region, schools:adSchoolsDraft.filter((s) => !s._del), deleteIds:dels.map((s) => s.id) });
-  S.schools = r.schools; adSchoolsDraft = regionSchools().map((s) => ({ ...s })); drawSchools(); toast("학교 목록을 저장했습니다."); loadAdminCounts();
+  S.schools = r.schools; adSchoolsDraft = regionSchools().map((s) => ({ ...s })); drawSchools(); toast("학교 목록을 저장했습니다."); loadAdminCounts(); fixPick(); renderSide();
 });
 function fillCodes(){ $("adCodes").value = codesOf($("adKind").value, $("adSubj").value, $("adLevel").value).join("\n"); }
 ["adSubj","adLevel","adKind"].forEach((id) => $(id).onchange = fillCodes);
@@ -1102,7 +1130,8 @@ $("btnCenterSave").onclick = () => run($("btnCenterSave"), async () => {
   regionInfo().center_name = $("adCenter").value.trim(); toast("저장했습니다.");
 });
 $("btnPwSave").onclick = () => run($("btnPwSave"), async () => {
-  await api("changePassword", { password:$("pwNew").value }); $("pwNew").value = ""; toast("비밀번호를 바꿨습니다.");
+  if (!confirm(`${S.region}센터 비밀번호를 바꿀까요?`)) return;
+  await api("changePassword", { region:S.region, password:$("pwNew").value }); $("pwNew").value = ""; toast(`${S.region}센터 비밀번호를 바꿨습니다.`);
 });
 
 // --- 구글시트 가져오기 (CSV 파일 / 붙여넣기) ---
@@ -1200,7 +1229,7 @@ $("btnImRun").onclick = () => run($("btnImRun"), async () => {
   const b = await api("bootstrap"); S.schools = b.schools; S.codes = b.codes; S.years = b.years; S.regions = b.regions; S.subjects = b.subjects || [];
   adSchoolsDraft = regionSchools().map((s) => ({ ...s })); drawSchools(); fillCodes();
   $("imInfo").textContent = `완료: 시험 ${done}개, 문항 ${qs}개를 가져왔습니다.`; $("btnImRun").disabled = true; imPlan = null;
-  toast("가져오기를 마쳤습니다."); loadAdminCounts();
+  toast("가져오기를 마쳤습니다."); loadAdminCounts(); loadSideSummary(); loadExams();
 });
 
 // ===== 시작 =====
