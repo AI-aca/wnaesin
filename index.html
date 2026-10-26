@@ -458,7 +458,7 @@ const DEFAULT_API = "https://xphtctpbysbbdyjaxidh.supabase.co/functions/v1/naesi
 const API = new URLSearchParams(location.search).get("api") || DEFAULT_API;
 const LEVELS = ["중","고"];
 const REGION_EN = { 송도:"SONGDO", 한강:"HANGANG", 청라:"CHEONGNA", 산본:"SANBON", 세종:"SEJONG", 배곧:"BAEGOT" };
-const REGION_DESC = { 송도:"인천 송도국제도시", 한강:"김포 한강신도시", 청라:"인천 청라국제도시", 산본:"군포 산본신도시", 세종:"세종 · 연세", 배곧:"시흥 배곧신도시" };
+const REGION_DESC = { 송도:"인천 송도국제도시", 한강:"김포 한강신도시", 청라:"인천 청라국제도시", 산본:"군포 산본신도시", 세종:"세종특별자치시", 배곧:"시흥 배곧신도시" };
 const SUBJ_STYLE = { 수학:{ ic:"∑", bg:"linear-gradient(135deg,#a78bfa,#818cf8)", en:"MATHEMATICS" }, 과학:{ ic:"⚛", bg:"linear-gradient(135deg,#5eead4,#38bdf8)", en:"SCIENCE" }, 영어:{ ic:"A", bg:"linear-gradient(135deg,#fcd34d,#f59e0b)", en:"ENGLISH" },
   국어:{ ic:"가", bg:"linear-gradient(135deg,#f9a8d4,#f472b6)", en:"KOREAN" }, 사회:{ ic:"◎", bg:"linear-gradient(135deg,#86efac,#22c55e)", en:"SOCIAL STUDIES" }, 역사:{ ic:"史", bg:"linear-gradient(135deg,#fdba74,#ea580c)", en:"HISTORY" } };
 const EXTRA_BG = ["linear-gradient(135deg,#93c5fd,#6366f1)","linear-gradient(135deg,#fca5a5,#ef4444)","linear-gradient(135deg,#c4b5fd,#a855f7)","linear-gradient(135deg,#67e8f9,#0891b2)"];
@@ -532,7 +532,10 @@ const codesOf = (kind, subject=S.subject, level=S.level, region=S.region) => S.c
 const schoolById = (id) => S.schools.find((s) => s.id === Number(id));
 const regionSchools = (region=S.region) => S.schools.filter((s) => s.region === region);
 const regionInfo = (r=S.region) => S.regions.find((x) => x.name === r) || { name:r, center_name:"" };
-const centerName = (r=S.region) => regionInfo(r).center_name || `${r}센터`;
+// 지역(내부 키)별 학원 이름. 화면의 'OO센터' 자리에는 학원 이름을 씀
+const RNAME = { 청라:"청라와이즈만", 송도:"송도와이즈만", 한강:"김포한강 와이즈만", 배곧:"시흥배곧 와이즈만", 산본:"산본와이즈만", 세종:"연세국제영어" };
+const RN = (r=S.region) => RNAME[r] || `${r}센터`;
+const centerName = (r=S.region) => RN(r);
 const examLabel = (sem, term) => `${sem}학기 ${term}`;
 const semText = (year, sem) => `${String(year).slice(2)}년 ${sem}학기`;
 function stars(v){
@@ -590,11 +593,11 @@ function stepRegion(el){
       const open = canOpen(r.name);
       const n = regionSchools(r.name).filter((s) => s.active).length;
       return `<button class="pick region ${r.name === S.region && open ? "sel" : ""} ${open ? "" : "locked"}" data-v="${esc(r.name)}" ${stagger(i)}>
-        <div class="en">${REGION_EN[r.name] || "CENTER"}</div><div class="nm">${esc(r.name)}</div><div class="ds">${esc(REGION_DESC[r.name] || r.center_name || "")}</div>
+        <div class="en">${REGION_EN[r.name] || "CENTER"}</div><div class="nm">${esc(r.name)}</div><div class="ds"><b style="color:var(--text);font-weight:600">${esc(RN(r.name))}</b> · ${esc(REGION_DESC[r.name] || "")}</div>
         <div class="ft"><span>${open ? `학교 ${n}곳` : "🔒 다른 센터"}</span>${arrow}</div></button>`; }).join("")}</div>
-    ${S.role === "owner" ? `<p class="muted" style="text-align:center;margin-top:22px">관리자로 접속했습니다 · 모든 센터를 열 수 있습니다</p>` : `<p class="muted" style="text-align:center;margin-top:22px">${esc(S.myRegion)}센터 비밀번호로 접속했습니다</p>`}`;
+    ${S.role === "owner" ? `<p class="muted" style="text-align:center;margin-top:22px">관리자로 접속했습니다 · 모든 센터를 열 수 있습니다</p>` : `<p class="muted" style="text-align:center;margin-top:22px">${esc(RN(S.myRegion))} 비밀번호로 접속했습니다</p>`}`;
   el.onclick = (e) => { const b = e.target.closest(".pick"); if (!b) return;
-    if (!canOpen(b.dataset.v)) { showNotice(`${b.dataset.v}센터`, `${b.dataset.v}센터 비밀번호가 아닙니다. 지금은 ${S.myRegion}센터 비밀번호로 접속해 있어 ${b.dataset.v}센터에는 들어갈 수 없습니다. ${b.dataset.v}센터를 보려면 로그아웃 후 ${b.dataset.v}센터 비밀번호로 다시 들어오세요.`); return; }
+    if (!canOpen(b.dataset.v)) { showNotice(RN(b.dataset.v), `${RN(b.dataset.v)} 비밀번호가 아닙니다. 지금은 ${RN(S.myRegion)} 비밀번호로 접속해 있어 ${RN(b.dataset.v)}에는 들어갈 수 없습니다. ${RN(b.dataset.v)}를 보려면 로그아웃 후 ${RN(b.dataset.v)} 비밀번호로 다시 들어오세요.`); return; }
     if (S.region !== b.dataset.v) { S.schoolId = null; S.sem = null; S.term = null; }
     S.region = b.dataset.v; fixPick(); savePick(); enterMain(); };
 }
@@ -614,11 +617,11 @@ function fixPick(){
 }
 
 // ===== 본 화면: 상단·사이드바 =====
-function adminLabel(){ return `${S.region}센터 관리`; }
+function adminLabel(){ return `${RN()} 관리`; }
 function updateAdminBtns(){ $("btnAdmin2").textContent = adminLabel(); $("btnAdmin2").classList.toggle("on", S.tab === "admin"); }
 function renderCrumbs(){
   const sc = schoolById(S.schoolId);
-  $("crumbs").textContent = [`${S.region}센터`, S.subject, sc ? `${sc.name} ${S.grade}학년` : null, `${S.year}학년도`].filter(Boolean).join("  ·  ");
+  $("crumbs").textContent = [RN(), S.subject, sc ? `${sc.name} ${S.grade}학년` : null, `${S.year}학년도`].filter(Boolean).join("  ·  ");
   updateAdminBtns();
 }
 let sideSum = {};
@@ -628,7 +631,7 @@ function renderSide(){
   const lvls = LEVELS.filter((l) => act.some((s) => s.level === l));
   const sch = act.filter((s) => s.level === S.level);
   $("side").innerHTML = `
-    <div class="center"><div><div class="eyebrow" style="font-size:10px">${REGION_EN[S.region] || "CENTER"}</div><b>${esc(S.region)}센터</b></div><button class="ghost small" data-act="center">센터 변경</button></div>
+    <div class="center"><div><div class="eyebrow" style="font-size:10px">${REGION_EN[S.region] || "CENTER"}</div><b>${esc(RN())}</b></div><button class="ghost small" data-act="center">센터 변경</button></div>
     <h4>과목</h4><div class="chips">${subs.map((x) => `<button class="chip ${x === S.subject ? "on" : ""}" data-act="subject" data-v="${esc(x)}">${esc(x)}</button>`).join("") || `<span class="muted">활성 과목이 없습니다</span>`}</div>
     <h4>학년도</h4><select id="sdYear" class="on">${yearOptions().map((y) => `<option value="${y}" ${y === S.year ? "selected" : ""}>${y}학년도</option>`).join("")}</select>
     ${lvls.length > 1 ? `<h4>학교급</h4><div class="chips">${lvls.map((l) => `<button class="chip ${l === S.level ? "on" : ""}" data-act="level" data-v="${l}">${l}학교</button>`).join("")}</div>` : ""}
@@ -1041,9 +1044,9 @@ $("lsTable").onclick = (e) => {
 // ===== 센터 관리 =====
 let adSchoolsDraft = [];
 function renderAdmin(){
-  $("adTitle").innerHTML = `<span class="gradtext">${esc(S.region)}</span> 센터 관리`;
-  $("pwTitle").innerHTML = `${esc(S.region)}센터 비밀번호 변경`;
-  $("imRegionNote").textContent = `→ ${S.region} 센터로 들어갑니다`;
+  $("adTitle").innerHTML = `<span class="gradtext">${esc(RN())}</span> 관리`;
+  $("pwTitle").innerHTML = `${esc(RN())} 비밀번호 변경`;
+  $("imRegionNote").textContent = `→ ${RN()}(으)로 들어갑니다`;
   adSchoolsDraft = regionSchools().map((s) => ({ ...s })).sort((a, b) => (b.active - a.active) || (a.level < b.level) - (a.level > b.level) || a.sort - b.sort);
   drawSchools();
   $("adSubj").innerHTML = regionSubjects().map((s) => `<option ${s === S.subject ? "selected" : ""}>${esc(s)}</option>`).join("");
@@ -1147,8 +1150,8 @@ $("btnCenterSave").onclick = () => run($("btnCenterSave"), async () => {
   regionInfo().center_name = $("adCenter").value.trim(); toast("저장했습니다.");
 });
 $("btnPwSave").onclick = () => run($("btnPwSave"), async () => {
-  if (!confirm(`${S.region}센터 비밀번호를 바꿀까요?`)) return;
-  await api("changePassword", { region:S.region, password:$("pwNew").value }); $("pwNew").value = ""; toast(`${S.region}센터 비밀번호를 바꿨습니다.`);
+  if (!confirm(`${RN()} 비밀번호를 바꿀까요?`)) return;
+  await api("changePassword", { region:S.region, password:$("pwNew").value }); $("pwNew").value = ""; toast(`${RN()} 비밀번호를 바꿨습니다.`);
 });
 
 // --- 구글시트 가져오기 (CSV 파일 / 붙여넣기) ---
@@ -1224,7 +1227,7 @@ $("btnImPreview").onclick = () => {
     const bySubj = {}; for (const g of r.groups) { bySubj[g.subject] ||= { e:0, q:0 }; bySubj[g.subject].e++; bySubj[g.subject].q += g.questions?.length || 0; }
     const years = [...new Set(r.groups.map((g) => g.year))].sort().join(", ");
     const big = r.groups.filter((g) => (g.questions?.length || 0) > 40);
-    $("imInfo").innerHTML = `<b>${esc(S.region)}</b> 센터로 · ` + Object.entries(bySubj).map(([k, v]) => `${esc(k)} 시험 ${v.e}개·문항 ${v.q}개`).join(" / ") + ` · 총평 ${r.cn}개 · 학년도 ${esc(years)}` +
+    $("imInfo").innerHTML = `<b>${esc(RN())}</b>(으)로 · ` + Object.entries(bySubj).map(([k, v]) => `${esc(k)} 시험 ${v.e}개·문항 ${v.q}개`).join(" / ") + ` · 총평 ${r.cn}개 · 학년도 ${esc(years)}` +
       (r.newSchools.length ? ` · <span style="color:var(--warn)">새 학교 ${r.newSchools.length}곳(${esc(r.newSchools.join(", "))})</span>` : "") +
       (big.length ? ` · <span style="color:var(--warn)">문항 40개 넘는 시험 ${big.map((g) => `${g.school} ${g.year % 100}년 ${g.semester}학기 ${g.term} ${g.grade}학년(${g.questions.length})`).join(", ")} — 같은 시험이 두 번 들어갔는지 확인</span>` : "") +
       (r.skipped.length ? ` · <span style="color:var(--warn)">건너뜀 ${r.skipped.length}행 (${esc(r.skipped.slice(0, 4).join(", "))}${r.skipped.length > 4 ? " …" : ""})</span>` : "");
@@ -1234,7 +1237,7 @@ $("btnImPreview").onclick = () => {
 $("btnImRun").onclick = () => run($("btnImRun"), async () => {
   if (!imPlan?.groups.length) return;
   const all = imPlan.groups;
-  if (!confirm(`${S.region} 센터로 시험 ${all.length}개를 가져옵니다. 같은 시험의 기존 문항은 교체됩니다. 진행할까요?`)) return;
+  if (!confirm(`${RN()}(으)로 시험 ${all.length}개를 가져옵니다. 같은 시험의 기존 문항은 교체됩니다. 진행할까요?`)) return;
   let done = 0, qs = 0;
   for (const subject of [...new Set(all.map((g) => g.subject))]) {
     const list = all.filter((g) => g.subject === subject);
