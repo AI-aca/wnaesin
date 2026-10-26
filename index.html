@@ -626,14 +626,14 @@ function renderSide(){
     <h4>과목</h4><div class="chips">${subs.map((x) => `<button class="chip ${x === S.subject ? "on" : ""}" data-act="subject" data-v="${esc(x)}">${esc(x)}</button>`).join("") || `<span class="muted">활성 과목이 없습니다</span>`}</div>
     <h4>학년도</h4><select id="sdYear">${yearOptions().map((y) => `<option value="${y}" ${y === S.year ? "selected" : ""}>${y}학년도</option>`).join("")}</select>
     ${lvls.length > 1 ? `<h4>학교급</h4><div class="chips">${lvls.map((l) => `<button class="chip ${l === S.level ? "on" : ""}" data-act="level" data-v="${l}">${l}학교</button>`).join("")}</div>` : ""}
-    <h4>학교</h4><div class="slist schl">${sch.map((x) => { const m = sideSum[x.id];
-      return `<button class="sitem ${x.id === S.schoolId ? "on" : ""}" data-act="school" data-v="${x.id}"><span><i class="${m ? "has" : ""}"></i>${esc(x.name)}</span><small>${m ? m.exams + "건" : ""}</small></button>`; }).join("")
-      || `<span class="muted" style="padding:6px 4px">등록된 학교가 없습니다</span>`}</div>
+    <h4>학교</h4>${sch.length ? `<select id="sdSchool">${sch.map((x) => { const m = sideSum[x.id];
+      return `<option value="${x.id}" ${x.id === S.schoolId ? "selected" : ""}>${esc(x.name)}${m ? `  (기록 ${m.exams}건)` : ""}</option>`; }).join("")}</select>`
+      : `<span class="muted" style="padding:6px 4px">등록된 학교가 없습니다</span>`}
     <h4>학년</h4><div class="chips">${[1,2,3].map((g) => `<button class="chip ${g === S.grade ? "on" : ""}" data-act="grade" data-v="${g}">${g}학년</button>`).join("")}</div>
     <h4>시험</h4><div class="slist" id="sdExams"></div>`;
+  if ($("sdSchool")) $("sdSchool").onchange = (e) => { if (!confirmLeave()) { e.target.value = S.schoolId; return; } S.schoolId = Number(e.target.value); S.level = schoolById(S.schoolId).level; afterPickChange(); };
   $("sdYear").onchange = (e) => { if (!confirmLeave()) { e.target.value = S.year; return; } S.year = Number(e.target.value); S.statYear = S.year; afterPickChange(); };
   renderExamList();
-  const on = $("side").querySelector(".slist.schl .on"); if (on) on.scrollIntoView({ block:"nearest" });
 }
 $("side").onclick = (e) => {
   const b = e.target.closest("button[data-act]"); if (!b) return;
