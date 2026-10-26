@@ -418,7 +418,7 @@ tr.off td input[data-k="name"]{color:var(--muted)}
           <h3>선택 목록 <small>형태·출처·유형·단원·난이도·변형 유무</small></h3>
           <div class="row" style="margin-bottom:10px"><select id="adSubj"></select><select id="adLevel"></select><select id="adKind"></select></div>
           <textarea id="adCodes" rows="15" placeholder="한 줄에 하나씩"></textarea>
-          <div class="row" style="margin-top:10px"><span class="muted" style="font-size:12px">한 줄에 하나씩, 위에서부터 표시 순서</span><span class="spacer"></span><button class="primary" id="btnCodesSave">목록 저장</button></div>
+          <div class="row" style="margin-top:10px"><span class="muted" style="font-size:12px">한 줄에 하나씩, 위에서부터 표시 순서. 단원은 <b>[중2] 단원명 (22개정)</b>처럼 학년과 개정을 붙여야 그 학년도 시험에 나타납니다.</span><span class="spacer"></span><button class="primary" id="btnCodesSave">목록 저장</button></div>
         </div>
         <div class="card" style="grid-column:1/-1">
           <h3>구글시트 기록 가져오기 <small id="imRegionNote"></small></h3>
@@ -769,10 +769,13 @@ function renderTable(){
   $("qTable").innerHTML = h + "</tbody>";
   $("inCount").textContent = `총 ${S.rows.length}문항`;
 }
-// 단원 선택: 선택한 학년(예: [중2]) 단원만. 학년 표시가 없는 단원도 함께, 이미 저장된 다른 값은 그대로 보여 줌
+// 교육과정: 학년도 - 학년 >= 2024 이면 2022 개정 (중1 2025, 중2 2026, 중3 2027부터)
+const curOf = (year, grade) => (Number(year) - Number(grade) >= 2024 ? "22개정" : "15개정");
+// 단원 선택: 선택한 학년(예: [중2]) + 그 학년도에 맞는 교육과정((15개정)/(22개정)) 단원만, 교과서 순서대로.
+// 이미 저장된 다른 값은 그대로 보여 줌
 function unitOptions(units, v){
-  const tag = `[${S.level}${S.grade}]`;
-  const list = units.filter((u) => u.startsWith(tag) || !/^\[[^\]]+\]/.test(u));
+  const tag = `[${S.level}${S.grade}]`, cur = `(${curOf(S.year, S.grade)})`;
+  const list = units.filter((u) => u.startsWith(tag) && u.endsWith(cur));
   if (v && !list.includes(v)) list.push(v);
   return list.map((u) => `<option value="${esc(u)}" ${u === v ? "selected" : ""}>${esc(u)}</option>`).join("");
 }
