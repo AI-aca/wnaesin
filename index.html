@@ -173,6 +173,9 @@ label.f{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--mu
 .side .sitem i{width:7px;height:7px;border-radius:50%;background:var(--line2);display:inline-block;margin-right:8px;vertical-align:middle}
 .side .sitem i.has{background:var(--a2);box-shadow:0 0 8px var(--a2)}
 .side select{width:100%}
+.side select.on{background:linear-gradient(135deg,rgba(139,124,255,.32),rgba(69,212,200,.18));border-color:rgba(139,124,255,.65);color:var(--text);font-weight:700}
+.side select option{background:#0d1120;color:var(--text);font-weight:400}
+.side select.unset{color:var(--muted)}
 header.top .brand .bt{font-size:15px}
 header.top .crumbs{color:var(--muted);font-size:13px}
 @media (max-width:900px){
@@ -566,7 +569,8 @@ async function afterLogin(){
   const last = store.get("pick");
   if (last && S.regions.some((x) => x.name === last.region)) Object.assign(S, last);
   if (S.role !== "owner" && S.myRegion && S.region !== S.myRegion) { S.region = S.myRegion; S.schoolId = null; S.sem = null; S.term = null; }
-  if (!S.year) S.year = currentSchoolYear();
+  S.year = currentSchoolYear(); S.statYear = S.year;   // 학년도 기본값 = 올해
+  S.schoolId = null; S.sem = null; S.term = null;      // 학교 기본값 = 선택하세요
   goPick();
 }
 
@@ -601,8 +605,10 @@ function fixPick(){
   if (!subs.includes(S.subject)) S.subject = subs[0] || null;
   const act = regionSchools().filter((s) => s.active);
   let sc = schoolById(S.schoolId);
-  if (!sc || sc.region !== S.region || !sc.active) sc = act.find((s) => s.level === S.level) || act[0] || null;
-  S.schoolId = sc ? sc.id : null; if (sc) S.level = sc.level;
+  if (!sc || sc.region !== S.region || !sc.active) sc = null;   // 학교는 직접 선택
+  S.schoolId = sc ? sc.id : null;
+  const lvls = LEVELS.filter((l) => act.some((s) => s.level === l));
+  if (sc) S.level = sc.level; else if (!lvls.includes(S.level)) S.level = lvls[0] || "중";
   if (![1,2,3].includes(Number(S.grade))) S.grade = 1;
   if (!S.year) S.year = currentSchoolYear();
 }
@@ -624,14 +630,14 @@ function renderSide(){
   $("side").innerHTML = `
     <div class="center"><div><div class="eyebrow" style="font-size:10px">${REGION_EN[S.region] || "CENTER"}</div><b>${esc(S.region)}센터</b></div><button class="ghost small" data-act="center">센터 변경</button></div>
     <h4>과목</h4><div class="chips">${subs.map((x) => `<button class="chip ${x === S.subject ? "on" : ""}" data-act="subject" data-v="${esc(x)}">${esc(x)}</button>`).join("") || `<span class="muted">활성 과목이 없습니다</span>`}</div>
-    <h4>학년도</h4><select id="sdYear">${yearOptions().map((y) => `<option value="${y}" ${y === S.year ? "selected" : ""}>${y}학년도</option>`).join("")}</select>
+    <h4>학년도</h4><select id="sdYear" class="on">${yearOptions().map((y) => `<option value="${y}" ${y === S.year ? "selected" : ""}>${y}학년도</option>`).join("")}</select>
     ${lvls.length > 1 ? `<h4>학교급</h4><div class="chips">${lvls.map((l) => `<button class="chip ${l === S.level ? "on" : ""}" data-act="level" data-v="${l}">${l}학교</button>`).join("")}</div>` : ""}
-    <h4>학교</h4>${sch.length ? `<select id="sdSchool">${sch.map((x) => { const m = sideSum[x.id];
+    <h4>학교</h4>${sch.length ? `<select id="sdSchool" class="${S.schoolId ? "on" : "unset"}"><option value="" ${S.schoolId ? "" : "selected"}>학교를 선택하세요</option>${sch.map((x) => { const m = sideSum[x.id];
       return `<option value="${x.id}" ${x.id === S.schoolId ? "selected" : ""}>${esc(x.name)}${m ? `  (기록 ${m.exams}건)` : ""}</option>`; }).join("")}</select>`
       : `<span class="muted" style="padding:6px 4px">등록된 학교가 없습니다</span>`}
     <h4>학년</h4><div class="chips">${[1,2,3].map((g) => `<button class="chip ${g === S.grade ? "on" : ""}" data-act="grade" data-v="${g}">${g}학년</button>`).join("")}</div>
     <h4>시험</h4><div class="slist" id="sdExams"></div>`;
-  if ($("sdSchool")) $("sdSchool").onchange = (e) => { if (!confirmLeave()) { e.target.value = S.schoolId; return; } S.schoolId = Number(e.target.value); S.level = schoolById(S.schoolId).level; afterPickChange(); };
+  if ($("sdSchool")) $("sdSchool").onchange = (e) => { if (!confirmLeave()) { e.target.value = S.schoolId ?? ""; return; } S.schoolId = Number(e.target.value) || null; if (S.schoolId) S.level = schoolById(S.schoolId).level; afterPickChange(); };
   $("sdYear").onchange = (e) => { if (!confirmLeave()) { e.target.value = S.year; return; } S.year = Number(e.target.value); S.statYear = S.year; afterPickChange(); };
   renderExamList();
 }
@@ -642,7 +648,7 @@ $("side").onclick = (e) => {
   if (!confirmLeave()) return;
   if (a === "center") { S.dirty = false; goPick(); return; }
   if (a === "subject") S.subject = v;
-  if (a === "level") { S.level = v; const f = regionSchools().find((x) => x.active && x.level === v); S.schoolId = f ? f.id : null; }
+  if (a === "level") { if (S.level !== v) { S.schoolId = null; S.sem = null; S.term = null; } S.level = v; }
   if (a === "school") { S.schoolId = Number(v); S.level = schoolById(S.schoolId).level; }
   if (a === "grade") S.grade = Number(v);
   afterPickChange(a === "subject");
@@ -667,6 +673,7 @@ async function loadExams(){
 }
 function renderExamList(){
   const el = $("sdExams"); if (!el) return;
+  if (!S.schoolId) { el.innerHTML = `<span class="muted" style="padding:6px 4px;font-size:13px">학교를 먼저 선택하세요</span>`; return; }
   el.innerHTML = EXAMS4.map(([s, t]) => {
     const ex = (S.examList || []).find((x) => x.semester === s && x.term === t);
     const on = S.sem === s && S.term === t ? "on" : "";
@@ -682,7 +689,7 @@ function showExamArea(){
   if (S.tab === "input") {
     if (S.sem && S.schoolId && S.subject) openEditor();
     else { $("inEditor").classList.add("hidden"); $("inHint").classList.remove("hidden");
-      $("inHint").textContent = !S.subject ? "이 센터에 활성 과목이 없습니다." : !S.schoolId ? "이 센터에 활성 학교가 없습니다." : "왼쪽에서 시험(학기·중간/기말)을 고르세요."; }
+      $("inHint").textContent = !S.subject ? "이 센터에 활성 과목이 없습니다." : !S.schoolId ? (regionSchools().some((x) => x.active) ? "왼쪽에서 학교를 선택하세요." : "이 센터에 활성 학교가 없습니다.") : "왼쪽에서 시험(학기·중간/기말)을 고르세요."; }
   }
   if (S.tab === "report") {
     if (S.sem && S.schoolId && S.subject) openReport();
