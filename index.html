@@ -1041,7 +1041,7 @@ function renderStatsShell(){
 }
 function fillStatSchools(sel){
   const lv = $("stLevel").value;
-  $("stSchool").innerHTML = `<option value="">${esc(RN())} 전체</option>` + regionSchools().filter((s) => s.level === lv).map((s) => `<option value="${s.id}" ${s.id === sel ? "selected" : ""}>${esc(s.name)}${s.active ? "" : " (숨김)"}</option>`).join("");
+  $("stSchool").innerHTML = `<option value="">${esc(RN())} 전체</option>` + regionSchools().filter((s) => s.level === lv && (s.active || s.id === sel)).map((s) => `<option value="${s.id}" ${s.id === sel ? "selected" : ""}>${esc(s.name)}</option>`).join("");
 }
 $("stLevel").onchange = () => { fillStatSchools(null); loadStats(); };
 ["stSchool","stGrade","stSem","stTerm"].forEach((id) => $(id).onchange = loadStats);
