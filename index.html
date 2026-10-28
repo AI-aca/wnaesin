@@ -427,14 +427,9 @@ tr.off td input[data-k="name"]{color:var(--muted)}
         </div>
         <div class="card" style="grid-column:1/-1">
           <h3>구글시트 기록 가져오기 <small id="imRegionNote"></small></h3>
-          <p class="muted" style="margin-bottom:12px">구글시트에서 내려받은 <b>CSV 파일</b>을 여러 개 한꺼번에 고르거나, 탭 내용을 제목 줄까지 복사해 아래 칸에 붙여넣으세요. 학교·학기·중간/기말·학년이 같은 시험은 문항이 <b>교체</b>됩니다(중복으로 쌓이지 않음). 없는 학교와 선택 목록 값은 이 센터에 자동으로 추가됩니다.</p>
+          <p class="muted" style="margin-bottom:12px">구글시트에서 내려받은 <b>CSV 파일</b>(문항 기록·총평 파일)을 여러 개 한꺼번에 고르세요. 문항 파일인지 총평 파일인지는 자동으로 구분합니다. 학교·학기·중간/기말·학년이 같은 시험은 문항이 <b>교체</b>됩니다(중복으로 쌓이지 않음). 없는 학교와 선택 목록 값은 이 센터에 자동으로 추가됩니다.</p>
           <label class="f" style="margin-bottom:8px">CSV 파일 선택 (여러 개 가능 · 파일 이름에 수학/과학/영어가 있으면 과목 자동 인식)<input type="file" id="imFiles" accept=".csv,.tsv,text/csv" multiple></label>
           <div id="imFileList" class="filelist" style="font-size:12px;margin-bottom:12px"></div>
-          <div class="row" style="margin-bottom:10px"><span class="muted">붙여넣기 내용의 과목</span><div class="seg" id="imSubject"></div></div>
-          <div class="row" style="align-items:stretch">
-            <label class="f" style="flex:1">문항 기록 탭<textarea id="imQ" rows="6"></textarea></label>
-            <label class="f" style="flex:1">총평/코멘트 탭<textarea id="imC" rows="6"></textarea></label>
-          </div>
           <div class="row" style="margin-top:10px"><button id="btnImPreview">미리보기</button><button class="primary" id="btnImRun" disabled>가져오기 실행</button><span class="muted" style="font-size:12px">미리보기로 올라갈 내용을 먼저 확인한 뒤 가져오기를 누르세요. (아직 저장되지 않음)</span></div>
           <div id="imInfo" class="iminfo"></div>
         </div>
@@ -1058,7 +1053,6 @@ function renderAdmin(){
   $("adKind").innerHTML = Object.entries(KIND_LABEL).map(([k, l]) => `<option value="${k}">${l}</option>`).join("");
   fillCodes();
   imSubject = S.subject;
-  seg($("imSubject"), regionSubjects(), S.subject, (v) => { imSubject = v; resetImport(); });
   $("adCenter").value = regionInfo().center_name || "";
   drawImFiles();
   loadAdminCounts();
@@ -1099,7 +1093,6 @@ $("btnSubjectSave").onclick = () => run($("btnSubjectSave"), async () => {
   if (!regionSubjects(S.region, true).includes(S.subject)) S.subject = regionSubjects(S.region, true)[0];
   drawSubjects(); loadAdminCounts(); fixPick(); renderSide(); renderCrumbs();
   $("adSubj").innerHTML = regionSubjects().map((s) => `<option ${s === S.subject ? "selected" : ""}>${esc(s)}</option>`).join(""); fillCodes();
-  seg($("imSubject"), regionSubjects(), imSubject, (v) => { imSubject = v; resetImport(); });
   toast("과목을 저장했습니다.");
 });
 let adCounts = { schools:{}, subjects:{} };
@@ -1160,7 +1153,6 @@ $("btnPwSave").onclick = () => run($("btnPwSave"), async () => {
 // --- 구글시트 가져오기 (CSV 파일 / 붙여넣기) ---
 let imSubject = "과학", imPlan = null, imFiles = [];
 function resetImport(){ imPlan = null; $("btnImRun").disabled = true; $("imInfo").textContent = ""; }
-["imQ","imC"].forEach((id) => $(id).addEventListener("input", resetImport));
 function classify(grid){
   if (!grid.length) return null;
   const m = headerMap(grid[0]);
@@ -1201,10 +1193,7 @@ $("imFileList").addEventListener("change", (e) => {
 });
 function buildImport(){
   const sources = imFiles.filter((f) => f.kind).map((f) => ({ ...f }));
-  const q = parseTSV($("imQ").value), c = parseTSV($("imC").value);
-  if (q.length) { if (classify(q) !== "question") throw new Error("문항 칸: 첫 줄에 학교·학기·중간/기말·학년·문항번호 제목이 있어야 합니다."); sources.push({ name:"붙여넣기(문항)", subject:imSubject, kind:"question", grid:q }); }
-  if (c.length) { if (classify(c) !== "comment") throw new Error("총평 칸: 첫 줄에 학교·학기·중간/기말·학년·총평 제목이 있어야 합니다."); sources.push({ name:"붙여넣기(총평)", subject:imSubject, kind:"comment", grid:c }); }
-  if (!sources.length) throw new Error("가져올 파일이나 붙여넣은 내용이 없습니다.");
+  if (!sources.length) throw new Error("가져올 CSV 파일을 먼저 고르세요.");
   const groups = new Map(); const skipped = []; const newSchools = new Set(); const known = new Set(regionSchools().map((s) => s.name));
   let qn = 0, cn = 0;
   sources.sort((a, b) => (a.kind === "comment") - (b.kind === "comment"));
