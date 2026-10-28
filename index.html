@@ -1069,7 +1069,7 @@ function rpDonut(label, entries, colorOf, nameOf=(k) => k){
 // 화면 밖에서 밝은(.light) 버전을 그려 PNG로 저장
 function loadScript(src){ return new Promise((ok, no) => { const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = () => no(new Error("이미지 저장 도구를 불러오지 못했습니다. 인터넷 연결을 확인하세요.")); document.head.appendChild(el); }); }
 // 저장 이미지 배경 선택 (흰/검은, 마지막 선택 기억)
-let imgTheme = store.get("imgTheme") === "dark" ? "dark" : "light";
+let imgTheme = store.get("imgTheme") === "light" ? "light" : "dark";   // 기본값: 검은 배경
 function drawImgBg(){ document.querySelectorAll(".imgbg button").forEach((b) => b.classList.toggle("on", b.dataset.v === imgTheme)); }
 document.querySelectorAll(".imgbg").forEach((g) => g.addEventListener("click", (e) => { const b = e.target.closest("button[data-v]"); if (!b) return; imgTheme = b.dataset.v; store.set("imgTheme", imgTheme); drawImgBg(); }));
 drawImgBg();
