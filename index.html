@@ -496,7 +496,7 @@ button.pdfbtn:hover{filter:brightness(1.08);transform:translateY(-1px)}.imgbg bu
 <!-- 오타 점검 창 -->
 <div id="spModal" class="modal hidden">
   <div class="mbox wide">
-    <h3 id="spTitle">오타 점검</h3>
+    <h3 id="spTitle">존칭 및 오타 분석</h3>
     <p class="muted" id="spMsg" style="margin:4px 0 0;line-height:1.6;font-size:13.5px"></p>
     <div class="splist" id="spList"></div>
     <div class="row" style="margin-top:16px;justify-content:flex-end;gap:8px" id="spBtns"></div>
@@ -626,9 +626,9 @@ button.pdfbtn:hover{filter:brightness(1.08);transform:translateY(-1px)}.imgbg bu
           <p class="muted" style="font-size:12px;margin-top:8px">이 센터 비밀번호만 바뀝니다. 바꾸면 이 센터 비밀번호로 접속 중인 사람은 로그아웃됩니다. 관리자 비밀번호는 그대로입니다.</p>
         </div>
         <div class="card">
-          <h3>오타 점검 (Gemini API 키) <small id="aiKeyState">모든 센터 공통</small></h3>
+          <h3>존칭 및 오타 분석 (Gemini API 키) <small id="aiKeyState">모든 센터 공통</small></h3>
           <div class="row"><input type="password" id="aiKey" placeholder="새 키를 넣을 때만 입력 (저장된 키는 보이지 않습니다)" style="flex:1" autocomplete="off"><button class="primary" id="btnAiKeySave">저장</button><button id="btnAiKeyDel">키 삭제</button></div>
-          <p class="muted" style="font-size:12px;margin-top:8px">키는 서버에만 보관되고 사이트·브라우저에는 내려오지 않습니다. 키가 있으면 문항 입력에서 [저장]을 누를 때 문항 내용·총평·비고의 맞춤법·오타를 먼저 점검하고, 총평의 반말은 존칭으로 바꾸도록 안내합니다. (띄어쓰기·수식·영어는 점검하지 않음)</p>
+          <p class="muted" style="font-size:12px;margin-top:8px">키는 서버에만 보관되고 사이트·브라우저에는 내려오지 않습니다. 키가 있으면 문항 입력에서 [저장]을 누를 때 문항 내용·총평·비고의 존칭(총평)과 맞춤법·오타를 먼저 분석해 고칠 곳을 보여 줍니다. (띄어쓰기·수식·영어는 분석하지 않음)</p>
         </div>
       </div>
     </div>
@@ -1115,25 +1115,25 @@ async function spellThenSave(){
   const targets = spellTargets();
   if (!targets.length) return doSave();
   const st = spState = { targets, cancelled:false };
-  spOpen("오타 점검", `<span class="spin"></span>오타를 점검 중입니다… (문항 내용·총평·비고 ${targets.length}칸 · 총평은 반말도 점검)`, [["spSkip","점검 없이 저장"],["spCancel","취소"]]);
+  spOpen("존칭 및 오타 분석", `<span class="spin"></span>존칭 및 오타를 분석 중입니다… (문항 내용·총평·비고 ${targets.length}칸 · 총평은 존칭도 분석)`, [["spSkip","분석 없이 저장"],["spCancel","취소"]]);
   $("spSkip").onclick = () => { st.cancelled = true; spClose(); doSave(); };
   $("spCancel").onclick = () => { st.cancelled = true; spClose(); };
   let r;
   try { r = await api("spellCheck", { items:targets.map((t) => ({ id:t.id, text:t.text, honor:t.honor })) }); }
   catch(e) {
     if (st.cancelled) return;
-    spOpen("오타 점검을 하지 못했습니다", esc(e.message) + "<br>점검 없이 저장하거나, 잠시 뒤 다시 저장을 눌러 주세요.", [["spSkip","점검 없이 저장","primary"],["spCancel","취소"]]);
+    spOpen("존칭 및 오타 분석을 하지 못했습니다", esc(e.message) + "<br>분석 없이 저장하거나, 잠시 뒤 다시 저장을 눌러 주세요.", [["spSkip","분석 없이 저장","primary"],["spCancel","취소"]]);
     $("spSkip").onclick = () => { spClose(); doSave(); }; $("spCancel").onclick = spClose; return;
   }
   if (st.cancelled) return;
   const byId = Object.fromEntries(targets.map((t) => [t.id, t]));
   const fixes = (r.fixes || []).filter((f) => byId[f.id]);
-  if (r.disabled || !fixes.length) { targets.forEach((t) => spellOk.add(t.text)); spClose(); if (!r.disabled) toast("오타가 없습니다."); return doSave(); }
+  if (r.disabled || !fixes.length) { targets.forEach((t) => spellOk.add(t.text)); spClose(); if (!r.disabled) toast("고칠 존칭·오타가 없습니다."); return doSave(); }
   st.fixes = fixes.map((f) => ({ ...f, choice:null }));
-  spOpen("오타 점검 결과", `오타(총평은 반말 → 존칭 포함)로 보이는 곳이 <b>${fixes.length}곳</b> 있습니다. 항목마다 <b>[정정]</b> 또는 <b>[그대로 두기]</b>를 누르세요. 모두 확인하면 바로 저장됩니다.`,
-    [["spAll","모두 정정하고 저장","primary"],["spSkip","점검 없이 저장"],["spCancel","취소"]]);
+  spOpen("존칭 및 오타 분석 결과", `고칠 곳이 <b>${fixes.length}곳</b> 있습니다 (존칭 <b>${fixes.filter((f) => /존칭/.test(f.reason || "")).length}곳</b> · 오타 <b>${fixes.filter((f) => !/존칭/.test(f.reason || "")).length}곳</b>). 항목마다 <b>[정정]</b> 또는 <b>[그대로 두기]</b>를 누르세요. 모두 확인하면 바로 저장됩니다.`,
+    [["spAll","모두 정정하고 저장","primary"],["spSkip","분석 없이 저장"],["spCancel","취소"]]);
   $("spList").innerHTML = st.fixes.map((f, k) => `<div class="spit" data-k="${k}"><div class="loc">${esc(byId[f.id].label)}</div>
-    <div class="ctx">${spCtx(byId[f.id].text, f.wrong, f.right)}</div>${f.reason ? `<div class="why">${/존칭/.test(f.reason) ? "반말 → 존칭" : esc(f.reason)}</div>` : ""}
+    <div class="ctx">${spCtx(byId[f.id].text, f.wrong, f.right)}</div><div class="why">${/존칭/.test(f.reason || "") ? "존칭 · 반말 → 존댓말" : `오타${f.reason ? " · " + esc(f.reason) : ""}`}</div>
     <div class="acts"><button data-c="fix">정정</button><button data-c="keep">그대로 두기</button></div></div>`).join("");
   $("spList").onclick = (e) => {
     const b = e.target.closest("button[data-c]"); if (!b) return;
@@ -1165,7 +1165,7 @@ function spApply(st){
 async function doSave(fixed=0){
   await run($("btnSave"), async () => {
   const r = await api("examSave", { ...keyArgs(), author:$("inAuthor").value, comment:$("inComment").value, memo:$("inMemo").value, questions:S.rows });
-  dropDraft(); S.dirty = false; toast(`저장했습니다. (${r.n}문항${fixed ? ` · 오타 ${fixed}곳 정정` : ""})`); await loadExams(); loadSideSummary(); await openEditor();
+  dropDraft(); S.dirty = false; toast(`저장했습니다. (${r.n}문항${fixed ? ` · 존칭·오타 ${fixed}곳 정정` : ""})`); await loadExams(); loadSideSummary(); await openEditor();
   });
 }
 $("btnSave").onclick = () => { if (!spState) spellThenSave(); };
@@ -1667,16 +1667,16 @@ function renderAdmin(){
   loadAiKey();
 }
 async function loadAiKey(){
-  try { const r = await api("aiKeyStatus"); $("aiKeyState").textContent = r.set ? "모든 센터 공통 · ✓ 키 설정됨" : "모든 센터 공통 · 키 없음(점검 안 함)"; } catch { $("aiKeyState").textContent = "모든 센터 공통"; }
+  try { const r = await api("aiKeyStatus"); $("aiKeyState").textContent = r.set ? "모든 센터 공통 · ✓ 키 설정됨" : "모든 센터 공통 · 키 없음(분석 안 함)"; } catch { $("aiKeyState").textContent = "모든 센터 공통"; }
 }
 $("aiKey").addEventListener("input", () => markAd("Gemini API 키", !!$("aiKey").value));
 $("btnAiKeySave").onclick = () => run($("btnAiKeySave"), async () => {
   if (!$("aiKey").value.trim()) throw new Error("API 키를 입력하세요.");
-  await api("saveAiKey", { key:$("aiKey").value.trim() }); $("aiKey").value = ""; markAd("Gemini API 키", false); toast("오타 점검 키를 저장했습니다."); loadAiKey();
+  await api("saveAiKey", { key:$("aiKey").value.trim() }); $("aiKey").value = ""; markAd("Gemini API 키", false); toast("존칭 및 오타 분석 키를 저장했습니다."); loadAiKey();
 });
 $("btnAiKeyDel").onclick = () => run($("btnAiKeyDel"), async () => {
-  if (!confirm("오타 점검 키를 삭제할까요? 삭제하면 저장할 때 오타 점검을 하지 않습니다.")) return;
-  await api("saveAiKey", { key:"" }); toast("오타 점검 키를 삭제했습니다."); loadAiKey();
+  if (!confirm("존칭 및 오타 분석 키를 삭제할까요? 삭제하면 저장할 때 분석을 하지 않습니다.")) return;
+  await api("saveAiKey", { key:"" }); toast("존칭 및 오타 분석 키를 삭제했습니다."); loadAiKey();
 });
 let adSubjectsDraft = [];
 function drawSubjects(fresh=true){
