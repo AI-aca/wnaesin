@@ -489,8 +489,8 @@ tr.off td input[data-k="name"]{color:var(--muted)}
           <div id="imInfo" class="iminfo"></div>
         </div>
         <div class="card">
-          <h3>보고서 센터 이름</h3>
-          <div class="row"><input id="adCenter" style="flex:1" placeholder="리포트 오른쪽 위에 표시"><button class="primary" id="btnCenterSave">저장</button></div>
+          <h3>학원(센터) 이름 <small>사이트 상단·사이드바·리포트에 표시</small></h3>
+          <div class="row"><input id="adCenter" style="flex:1" placeholder="비워 두면 기본 이름으로 표시"><button class="primary" id="btnCenterSave">저장</button></div>
         </div>
         <div class="card">
           <h3 id="pwTitle">센터 비밀번호 변경</h3>
@@ -587,7 +587,7 @@ const regionSchools = (region=S.region) => S.schools.filter((s) => s.region === 
 const regionInfo = (r=S.region) => S.regions.find((x) => x.name === r) || { name:r, center_name:"" };
 // 지역(내부 키)별 학원 이름. 화면의 'OO센터' 자리에는 학원 이름을 씀
 const RNAME = { 청라:"청라와이즈만", 송도:"송도와이즈만", 한강:"김포한강 와이즈만", 배곧:"시흥배곧 와이즈만", 산본:"산본와이즈만", 세종:"연세국제영어" };
-const RN = (r=S.region) => RNAME[r] || `${r}센터`;
+const RN = (r=S.region) => String(regionInfo(r).center_name || "").trim() || RNAME[r] || `${r}센터`;   // 관리 화면의 '학원(센터) 이름'이 우선
 const centerName = (r=S.region) => RN(r);
 const examLabel = (sem, term) => `${sem}학기 ${term}`;
 const semText = (year, sem) => `${String(year).slice(2)}년 ${sem}학기`;
@@ -1282,6 +1282,8 @@ $("btnCodesSave").onclick = () => run($("btnCodesSave"), async () => {
 $("btnCenterSave").onclick = () => run($("btnCenterSave"), async () => {
   await api("saveCenter", { region:S.region, center:$("adCenter").value });
   regionInfo().center_name = $("adCenter").value.trim(); toast("저장했습니다.");
+  $("adTitle").innerHTML = `<span class="gradtext">${esc(RN())}</span> 관리`; $("pwTitle").innerHTML = `${esc(RN())} 비밀번호 변경`;
+  $("imRegionNote").textContent = `→ ${RN()}(으)로 들어갑니다`; renderCrumbs(); renderSide();
 });
 $("btnPwSave").onclick = () => run($("btnPwSave"), async () => {
   if (!confirm(`${RN()} 비밀번호를 바꿀까요?`)) return;
