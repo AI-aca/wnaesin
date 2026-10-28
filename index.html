@@ -155,7 +155,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--mu
 .emptybox{text-align:center;color:var(--muted);padding:50px 0}
 
 /* ===== 본 화면 ===== */
-.layout{display:grid;grid-template-columns:288px minmax(0,1fr);align-items:start}
+.layout{display:grid;grid-template-columns:270px minmax(0,1fr);align-items:start}
 .content{min-width:0}
 .side{position:sticky;top:61px;height:calc(100vh - 61px);overflow:auto;padding:18px 16px 40px;border-right:1px solid var(--line);background:rgba(8,11,20,.4)}
 .side h4{font-size:11px;letter-spacing:.14em;color:var(--muted);margin:20px 4px 8px;font-weight:700}
@@ -331,6 +331,74 @@ tr.off td input[data-k="name"]{color:var(--muted)}
 .paper .rp-foot{display:flex;justify-content:space-between;margin-top:12px;padding-top:7px;border-top:1px solid var(--hair);font-size:8.5px;color:var(--mute);letter-spacing:.02em}
 .paper .rp-empty{color:var(--mute);padding:40px 0;text-align:center}
 #exportStage{position:fixed;left:-20000px;top:0;pointer-events:none}
+/* ===== 리포트 화면 (사이트 디자인, 좌: 요약·그래프 / 우: 총평·문항) ===== */
+.rs{  --pbg:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.018));
+  --ink:#eef1f8;--ink2:#b7bdcc;--mute:#7d8599;--hair:rgba(255,255,255,.08);--rule:rgba(255,255,255,.18);
+  --soft:rgba(255,255,255,.04);--zebra:rgba(255,255,255,.018);--chip:rgba(255,255,255,.08);--ring:rgba(255,255,255,.07);
+  --ac:#8b7cff;--ac2:#45d4c8;--on-bg:#eef1f8;--on-fg:#0b0e1a;--k1:linear-gradient(135deg,rgba(139,124,255,.42),rgba(69,212,200,.2));--k1-fg:#fff;--k1-sub:rgba(255,255,255,.72);
+  --s0:#e4deff;--s1:#a99bff;--s2:#7c6cf0;--s3:#5a52b8;--s4:#41408a;
+  --p0b:#c9bfff;--p0f:#140f3a;--p1b:#8b7cff;--p1f:#fff;--p2b:rgba(139,124,255,.28);--p2f:#ddd8ff;--p3b:rgba(255,255,255,.08);--p3f:#b7bdcc;--p4b:rgba(255,255,255,.04);--p4f:#7d8599;}
+.rs-head{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;margin:4px 0 20px}
+.rs-head h2{font-size:26px;font-weight:800;letter-spacing:-.035em;margin:0}
+.rs-head h2 small{font-size:15px;color:var(--muted);font-weight:600;margin-left:6px}
+.rs-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rs-meta .tag{padding:4px 11px;border-radius:999px;font-size:12px;font-weight:700;background:var(--glass2);border:1px solid var(--line2);color:var(--sub)}
+.rs-meta .tag.on{background:var(--grad);color:#0a0d18;border-color:transparent}
+.rs-grid{display:grid;grid-template-columns:minmax(330px,400px) minmax(0,1fr);gap:18px;align-items:start}
+.rs-left{display:flex;flex-direction:column;gap:14px}
+.rs-kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rs-kpi{padding:14px 16px;border-radius:16px;background:var(--glass);border:1px solid var(--line)}
+.rs-kpi b{display:block;font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.rs-kpi b em{font-style:normal;font-size:13px;color:var(--sub);margin-left:3px;font-weight:700}
+.rs-kpi span{font-size:12px;color:var(--muted)}
+.rs-kpi.hi{background:linear-gradient(135deg,rgba(139,124,255,.35),rgba(69,212,200,.16));border-color:rgba(139,124,255,.45)}
+.rs-kpi.hi span{color:var(--sub)}
+.rs-card{padding:18px 20px;border-radius:18px;background:rgba(255,255,255,.028);border:1px solid rgba(255,255,255,.05);min-width:0}
+.rs-sum{display:flex;gap:20px;align-items:center;background:linear-gradient(135deg,rgba(139,124,255,.18),rgba(69,212,200,.07));border-color:rgba(139,124,255,.25)}
+.rs-sum .big{flex:none;text-align:center;padding-right:20px;border-right:1px solid var(--line)}
+.rs-sum .big b{display:block;font-size:44px;font-weight:800;letter-spacing:-.04em;line-height:1}.rs-sum .big span{font-size:12.5px;color:var(--sub)}
+.rs-sum dl{margin:0;flex:1;display:flex;flex-direction:column;gap:8px}
+.rs-sum dl div{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+.rs-sum dt{color:var(--muted)}.rs-sum dd{margin:0;font-weight:700;text-align:right}.rs-sum dd small{color:var(--muted);font-weight:500}
+.rs-charts{display:flex;flex-direction:column;gap:0;padding-top:6px;padding-bottom:6px}
+.rs-ch{padding:14px 0}.rs-ch+.rs-ch{border-top:1px solid var(--line)}
+.rs .dd{display:inline-flex;align-items:center;gap:6px;font-weight:700}.rs .dd i{width:8px;height:8px;border-radius:50%}
+.rs-q td.s{color:var(--sub)}
+.rs-card h3{font-size:14px;font-weight:700;color:var(--sub);margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.rs-card h3 small{color:var(--muted);font-weight:500;font-size:12px}
+.rs .rp-sec{font-size:14px;font-weight:700;color:var(--sub);margin:0 0 10px;letter-spacing:0;display:block}
+.rs .dn{display:flex;align-items:center;gap:16px}
+.rs .dn svg{width:112px;height:112px;flex:none}
+.rs .dn svg text{font-size:8px;font-weight:800;fill:var(--ink);font-family:inherit}
+.rs .dn .lg{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.rs .dn .lg span{display:flex;align-items:flex-start;gap:7px;font-size:13px}
+.rs .dn .lg i{width:10px;height:10px;border-radius:3px;flex:none;margin-top:4px}
+.rs .dn .lg em{font-style:normal;flex:1;min-width:0;word-break:keep-all;line-height:1.35}
+.rs .dn .lg b{font-variant-numeric:tabular-nums}
+.rs .dn .lg small{color:var(--muted);width:34px;text-align:right;font-size:11.5px;font-variant-numeric:tabular-nums;margin-top:1px}
+.rs-right{display:flex;flex-direction:column;gap:14px;min-width:0}
+.rs-comment p{white-space:pre-wrap;line-height:1.7;font-size:13.5px;color:var(--text);margin:0}
+.rs-comment .by{text-align:right;margin-top:10px;font-size:12.5px;color:var(--muted)}
+.rs-comment{box-shadow:inset 3px 0 0 var(--a1)}
+.rs-q{width:100%;border-collapse:collapse}
+.rs-q th{font-size:12px;color:var(--muted);font-weight:600;text-align:left;padding:10px 12px;white-space:nowrap;border-bottom:1px solid var(--line)}
+.rs-q td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.045);font-size:13.5px;vertical-align:middle}
+.rs-q tr:hover td{background:rgba(255,255,255,.025)}
+.rs-q td.no{font-weight:800;width:1%;white-space:nowrap;text-align:center}
+.rs-q th.no{text-align:center}
+.rs-q td.nw{white-space:nowrap}
+.rs-q td.u{color:var(--sub);font-size:13px;white-space:nowrap}
+.rs-q td.c{color:var(--text);line-height:1.5}
+.rs-q .empty-c{color:var(--muted)}
+.rs .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;line-height:1.6}
+.rs .pill.f{background:var(--chip);color:var(--ink2)}
+.rs .pill.t{background:transparent;color:var(--muted);padding-left:4px;font-weight:600}
+.rs .pill.g{background:transparent;border:1px solid var(--line2);color:var(--sub);font-weight:600}
+.rs .d0{background:var(--p0b);color:var(--p0f)}.rs .d1{background:var(--p1b);color:var(--p1f)}.rs .d2{background:var(--p2b);color:var(--p2f)}.rs .d3{background:var(--p3b);color:var(--p3f)}.rs .d4{background:var(--p4b);color:var(--p4f)}
+.rs-qwrap{overflow-x:auto;margin:0 -18px -16px;border-top:1px solid var(--line)}
+.rs-qwrap .rs-q{min-width:620px}
+@media (max-width:1250px){.rs-grid{grid-template-columns:1fr}.rs-left{position:static}}
+
 .guide{max-width:640px;margin:40px auto;padding:34px 36px;border-radius:22px;background:var(--glass2);border:1px solid var(--line2);text-align:center;box-shadow:0 30px 80px -40px rgba(0,0,0,.9)}
 .guide .gi{width:56px;height:56px;margin:0 auto 14px;border-radius:16px;background:var(--grad);color:#0a0d18;display:grid;place-items:center;font-size:28px;font-weight:800;animation:nudge 1.6s var(--ease) infinite}
 @keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(-8px)}}
@@ -343,9 +411,6 @@ tr.off td input[data-k="name"]{color:var(--muted)}
 .guide li.ok span{background:var(--a2);color:#0a0d18}.guide li.ok em{color:var(--sub)}
 .guide li.now{border-color:rgba(139,124,255,.7);background:rgba(139,124,255,.14)}.guide li.now span{background:var(--a1);color:#0a0d18}.guide li.now em{color:var(--text);font-weight:700}
 @media (max-width:720px){.guide{padding:24px 18px}.guide ol{grid-template-columns:repeat(2,1fr)}}
-/* 화면용 리포트: 종이 모양 없이 사이트 화면에 맞춰 꽉 차게 (저장 이미지는 따로 그림) */
-#reportPaper.paper{width:auto;zoom:1.2;margin:0;padding:0;background:none;border:none;border-radius:0;box-shadow:none}
-#reportPaper.paper .rp-head{padding-top:2px}
 /* 저장 이미지는 컴퓨터에 깔린 글꼴로 그림 (웹 글꼴이 이미지에 안 들어가 글자가 겹치는 문제 방지) */
 #exportStage .paper{font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo","Noto Sans KR","Noto Sans CJK KR",sans-serif}
 .paper .rp-tags span,.paper .rp-foot span,.paper .rp-title small,.paper .rp-brand b,.paper .rp-brand i{white-space:nowrap}
@@ -357,7 +422,7 @@ tr.off td input[data-k="name"]{color:var(--muted)}
   .g5,.g3{grid-template-columns:repeat(2,minmax(0,1fr))}.pick .nm{font-size:24px}.grade .nm{font-size:40px}
   header.top{padding:12px 16px}main{padding:16px}
   .charts{grid-template-columns:1fr}.exam-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(2,1fr)}
-  .paper{width:100%;min-height:0;padding:16px;zoom:1}#reportPaper.paper{width:100%;zoom:1;padding:0}.paper .rp-panels{grid-template-columns:1fr}.paper .rp-kpis{grid-template-columns:repeat(2,1fr)}.paper .rp-meta{grid-template-columns:repeat(3,1fr)}
+  .paper{width:100%;min-height:0;padding:16px;zoom:1}.paper .rp-panels{grid-template-columns:1fr}.paper .rp-kpis{grid-template-columns:repeat(2,1fr)}.paper .rp-meta{grid-template-columns:repeat(3,1fr)}
 }
 </style>
 </head>
@@ -447,7 +512,7 @@ tr.off td input[data-k="name"]{color:var(--muted)}
     <!-- 리포트 -->
     <div id="tReport" class="panel hidden">
       <div class="row" style="margin-bottom:14px"><span class="spacer"></span><span class="muted" style="font-size:12px">블로그 등에 올릴 수 있는 PNG 이미지로 저장됩니다</span><div class="seg imgbg" title="저장할 이미지 배경"><button data-v="light">흰 배경</button><button data-v="dark">검은 배경</button></div><button class="primary" id="btnSaveImg">이미지로 저장</button></div>
-      <div id="reportPaper" class="paper"></div>
+      <div id="reportPaper"></div>
     </div>
 
     <!-- 통계 -->
@@ -527,7 +592,7 @@ const DEFAULT_API = "https://xphtctpbysbbdyjaxidh.supabase.co/functions/v1/naesi
 const API = new URLSearchParams(location.search).get("api") || DEFAULT_API;
 const LEVELS = ["중","고"];
 const REGION_EN = { 송도:"SONGDO", 한강:"HANGANG", 청라:"CHEONGNA", 산본:"SANBON", 세종:"SEJONG", 배곧:"BAEGOT" };
-const REGION_DESC = { 송도:"인천광역시 연수구", 한강:"경기도 김포시", 청라:"인천광역시 서구", 산본:"경기도 군포시", 세종:"세종특별자치시", 배곧:"경기도 시흥시" };
+const REGION_DESC = { 송도:"인천광역시 연수구", 한강:"경기도 김포시", 청라:"인천광역시 서해구", 산본:"경기도 군포시", 세종:"세종특별자치시", 배곧:"경기도 시흥시" };
 const SUBJ_STYLE = { 수학:{ ic:"∑", bg:"linear-gradient(135deg,#a78bfa,#818cf8)", en:"MATHEMATICS" }, 과학:{ ic:"⚛", bg:"linear-gradient(135deg,#5eead4,#38bdf8)", en:"SCIENCE" }, 영어:{ ic:"A", bg:"linear-gradient(135deg,#fcd34d,#f59e0b)", en:"ENGLISH" },
   국어:{ ic:"가", bg:"linear-gradient(135deg,#f9a8d4,#f472b6)", en:"KOREAN" }, 사회:{ ic:"◎", bg:"linear-gradient(135deg,#86efac,#22c55e)", en:"SOCIAL STUDIES" }, 역사:{ ic:"史", bg:"linear-gradient(135deg,#fdba74,#ea580c)", en:"HISTORY" } };
 const EXTRA_BG = ["linear-gradient(135deg,#93c5fd,#6366f1)","linear-gradient(135deg,#fca5a5,#ef4444)","linear-gradient(135deg,#c4b5fd,#a855f7)","linear-gradient(135deg,#67e8f9,#0891b2)"];
@@ -1031,6 +1096,7 @@ function renderReport(exam, qs){
   const dOrder = codesOf(dkey);
   const dIdx = (v) => diffRank(v, dOrder);
   const dPill = (v) => v ? `<span class="pill d${dIdx(v)}">${esc(v)}</span>` : "";
+  const dDot = (v) => v ? `<span class="dd"><i style="background:var(--s${dIdx(v)})"></i>${esc(v)}</span>` : "";
   const diffEntries = countBy(qs, dkey).sort((a, b) => dIdx(a[0]) - dIdx(b[0]));
   const n = qs.length;
   const pct = (k) => n ? Math.round(k * 100 / n) : 0;
@@ -1065,7 +1131,40 @@ function renderReport(exam, qs){
     <div class="rp-kpi"><b>${pct(hard)}<em>%</em></b><span>${isVar ? "변형 문항 비율" : "상위 난이도 비율"} (${hard}문항)</span></div>
     <div class="rp-kpi"><b>${eng ? new Set(qs.map((q) => q.qtype).filter(Boolean)).size : unitsN}<em>개</em></b><span>${eng ? "출제 유형 수" : "출제 단원 수"}</span></div></div>`;
   const today = new Date().toLocaleDateString("ko-KR");
-  paper.innerHTML = `
+  const comment = String(exam?.comment || "").trim();
+  // 화면용 (사이트 디자인)
+  const kv = (cls, big, unit, label) => `<div class="rs-kpi ${cls}"><b>${big}${unit ? `<em>${unit}</em>` : ""}</b><span>${label}</span></div>`;
+  let srows;
+  if (!eng) {
+    srows = `<thead><tr><th class="no">번호</th><th>난이도</th><th>형태</th><th>유형</th><th>단원</th><th>세부 내용</th></tr></thead><tbody>` +
+      qs.map((q) => `<tr><td class="no">${esc(q.no)}</td><td class="nw">${dPill(q.difficulty)}</td><td class="nw">${q.form ? `<span class="pill f">${esc(q.form)}</span>` : ""}</td><td class="nw">${q.qtype ? `<span class="pill g">${esc(q.qtype)}</span>` : ""}</td><td class="u">${esc(cleanUnit(q.unit))}</td><td class="c">${esc(q.content)}</td></tr>`).join("") + "</tbody>";
+  } else {
+    srows = `<thead><tr><th class="no">번호</th><th>${FIELD[dkey].label}</th><th>형태</th><th>출처</th><th>유형</th><th>비고</th></tr></thead><tbody>` +
+      qs.map((q) => `<tr><td class="no">${esc(q.no)}</td><td class="nw">${dPill(q[dkey])}</td><td class="nw">${q.form ? `<span class="pill f">${esc(q.form)}</span>` : ""}</td><td class="nw s">${esc(q.source)}</td><td class="nw">${esc(q.qtype)}</td><td class="c">${esc(q.note || q.content)}</td></tr>`).join("") + "</tbody>";
+  }
+  paper.innerHTML = `<div class="rs">
+    <div class="rs-head">
+      <h2>${esc(sc?.name || "")} ${S.grade}학년 ${S.sem}학기 ${esc(S.term)}고사<small>${S.year}학년도</small></h2>
+      <div class="rs-meta"><span class="tag on">${esc(S.subject)}</span>${curTxt ? `<span class="tag">${esc(curTxt)}</span>` : ""}<span class="muted" style="font-size:12.5px">${esc(centerName())}</span></div>
+    </div>
+    ${n ? `<div class="rs-grid">
+      <aside class="rs-left">
+        <div class="rs-card rs-sum">
+          <div class="big"><b>${n}</b><span>문항</span></div>
+          <dl><div><dt>${isVar ? "변형 문항 비율" : "상위 난이도 비율"}</dt><dd>${pct(hard)}% <small>(${hard}문항)</small></dd></div>
+            <div><dt>${eng ? "출제 유형 수" : "출제 단원 수"}</dt><dd>${eng ? new Set(qs.map((q) => q.qtype).filter(Boolean)).size : unitsN}개</dd></div>
+            <div><dt>문항 형태</dt><dd>${esc(formTxt)}</dd></div></dl>
+        </div>
+        <div class="rs-card rs-charts">${panels.map((x) => `<div class="rs-ch">${x}</div>`).join("")}</div>
+        ${comment ? `<div class="rs-card rs-comment"><h3>총평</h3><p>${esc(comment)}</p>${exam?.author ? `<div class="by">작성 ${esc(exam.author)}</div>` : ""}</div>` : ""}
+      </aside>
+      <section class="rs-right">
+        <div class="rs-card"><h3>문항별 분석 <small>${n}문항</small></h3><div class="rs-qwrap"><table class="rs-q">${srows}</table></div></div>
+      </section>
+    </div>` : `<div class="rs-card" style="text-align:center;padding:40px;color:var(--muted)">이 시험은 아직 입력된 문항이 없습니다.</div>`}
+  </div>`;
+  // 저장 이미지용 (흰/검은 배경 카드형 리포트)
+  S.rpExport = `
     <div class="rp-head">
       <div><div class="rp-title">${esc(sc?.name || "")} ${S.grade}학년 ${S.sem}학기 ${esc(S.term)}고사 분석 <small>(${S.year}학년도)</small></div>
         <div class="rp-tags"><span class="on">${esc(S.subject)}</span>${curTxt ? `<span>${esc(curTxt)}</span>` : ""}</div></div>
@@ -1078,10 +1177,9 @@ function renderReport(exam, qs){
 }
 // 리포트를 PNG 이미지로 저장 (블로그용, 밝은 디자인)
 $("btnSaveImg").onclick = () => run($("btnSaveImg"), async () => {
-  const paper = $("reportPaper");
-  if (!paper.querySelector(".rp-head")) throw new Error("왼쪽에서 시험을 먼저 고르세요.");
+  if (!$("reportPaper").querySelector(".rs") || !S.rpExport) throw new Error("왼쪽에서 시험을 먼저 고르세요.");
   const sc = schoolById(S.schoolId);
-  await savePaperImage(paper.innerHTML, `${S.year}학년도_${sc?.name || ""}_${S.grade}학년_${S.sem}학기_${S.term}_${S.subject}.png`);
+  await savePaperImage(S.rpExport, `${S.year}학년도_${sc?.name || ""}_${S.grade}학년_${S.sem}학기_${S.term}_${S.subject}.png`);
   toast("이미지를 저장했습니다.");
 });
 
