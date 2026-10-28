@@ -634,12 +634,12 @@ function renderSide(){
     <h4>학년도</h4><select id="sdYear" class="on">${yearOptions().map((y) => `<option value="${y}" ${y === S.year ? "selected" : ""}>${y}학년도</option>`).join("")}</select>
     ${lvls.length > 1 ? `<h4>학교급</h4><div class="chips">${lvls.map((l) => `<button class="chip ${l === S.level ? "on" : ""}" data-act="level" data-v="${l}">${l}학교</button>`).join("")}</div>` : ""}
     <h4>학교</h4>${sch.length ? `<select id="sdSchool" class="${S.schoolId ? "on" : "unset"}"><option value="" ${S.schoolId ? "" : "selected"}>학교를 선택하세요</option>${sch.map((x) => { const m = sideSum[x.id];
-      return `<option value="${x.id}" ${x.id === S.schoolId ? "selected" : ""}>${esc(x.name)}${m ? `  (기록 ${m.exams}건)` : ""}</option>`; }).join("")}</select>`
+      return `<option value="${x.id}" ${x.id === S.schoolId ? "selected" : ""}>${esc(x.name)}${m ? `  (${S.year}학년도 ${m.exams}건)` : ""}</option>`; }).join("")}</select>`
       : `<span class="muted" style="padding:6px 4px">등록된 학교가 없습니다</span>`}
     <h4>학년</h4><div class="chips">${[1,2,3].map((g) => `<button class="chip ${g === S.grade ? "on" : ""}" data-act="grade" data-v="${g}">${g}학년</button>`).join("")}</div>
     <h4>시험</h4><div class="slist" id="sdExams"></div>`;
   if ($("sdSchool")) $("sdSchool").onchange = (e) => { if (!confirmLeave()) { e.target.value = S.schoolId ?? ""; return; } S.schoolId = Number(e.target.value) || null; if (S.schoolId) S.level = schoolById(S.schoolId).level; afterPickChange(); };
-  $("sdYear").onchange = (e) => { if (!confirmLeave()) { e.target.value = S.year; return; } S.year = Number(e.target.value); S.statYear = S.year; afterPickChange(); };
+  $("sdYear").onchange = (e) => { if (!confirmLeave()) { e.target.value = S.year; return; } S.year = Number(e.target.value); S.statYear = S.year; afterPickChange(true); };
   renderExamList();
 }
 $("side").onclick = (e) => {
@@ -661,7 +661,7 @@ async function afterPickChange(subjChanged=false){
 }
 async function loadSideSummary(){
   sideSum = {};
-  if (S.subject) { try { const r = await api("schoolSummary", { region:S.region, subject:S.subject }); r.summary.forEach((x) => sideSum[x.school_id] = x); } catch {} }
+  if (S.subject) { try { const r = await api("schoolSummary", { region:S.region, subject:S.subject, year:S.year }); r.summary.forEach((x) => sideSum[x.school_id] = x); } catch {} }
   renderSide();
 }
 async function loadExams(){
@@ -962,16 +962,18 @@ $("btnPrint").onclick = () => { fitPaper(); window.print(); };
 
 // ===== 통계 =====
 function renderStatsShell(){
+  // 기본값 = 사이드바에서 고른 학년도·학교·학년·학기·중간/기말
+  S.statYear = S.year;
   seg($("stYears"), yearOptions(), S.statYear, (v) => { S.statYear = Number(v); loadStats(); }, (v) => v + "학년도");
   const lvls = LEVELS.filter((l) => regionSchools().some((s) => s.level === l));
   $("stLevel").innerHTML = (lvls.length ? lvls : ["중"]).map((l) => `<option ${l === S.level ? "selected" : ""}>${l}</option>`).join("");
   fillStatSchools(S.schoolId);
-  $("stGrade").value = String(S.grade); $("stSem").value = ""; $("stTerm").value = "";
+  $("stGrade").value = String(S.grade); $("stSem").value = S.sem ? String(S.sem) : ""; $("stTerm").value = S.term || "";
   loadStats();
 }
 function fillStatSchools(sel){
   const lv = $("stLevel").value;
-  $("stSchool").innerHTML = `<option value="">${esc(S.region)} 전체</option>` + regionSchools().filter((s) => s.level === lv).map((s) => `<option value="${s.id}" ${s.id === sel ? "selected" : ""}>${esc(s.name)}${s.active ? "" : " (숨김)"}</option>`).join("");
+  $("stSchool").innerHTML = `<option value="">${esc(RN())} 전체</option>` + regionSchools().filter((s) => s.level === lv).map((s) => `<option value="${s.id}" ${s.id === sel ? "selected" : ""}>${esc(s.name)}${s.active ? "" : " (숨김)"}</option>`).join("");
 }
 $("stLevel").onchange = () => { fillStatSchools(null); loadStats(); };
 ["stSchool","stGrade","stSem","stTerm"].forEach((id) => $(id).onchange = loadStats);
@@ -983,7 +985,7 @@ async function loadStats(){
   $("stKpis").innerHTML = `<div class="kpi"><span>불러오는 중…</span></div>`;
   let r; try { r = await api("stats", args); } catch(e) { toast(e.message, true); return; }
   if (my !== statSeq) return;
-  $("stKpis").innerHTML = `<div class="kpi"><b>${r.exams}</b><span>시험 수</span></div><div class="kpi"><b>${r.total}</b><span>총 문항 수</span></div><div class="kpi"><b class="gradtext">${esc(S.subject)}</b><span>${esc(S.region)} · ${S.statYear}학년도 · ${level}학교</span></div>`;
+  $("stKpis").innerHTML = `<div class="kpi"><b>${r.exams}</b><span>시험 수</span></div><div class="kpi"><b>${r.total}</b><span>총 문항 수</span></div><div class="kpi"><b class="gradtext">${esc(S.subject)}</b><span>${esc(RN())} · ${S.statYear}학년도 · ${level}학교</span></div>`;
   S.charts.forEach((c) => c.destroy()); S.charts = [];
   const plan = chartPlan(S.subject, level);
   $("stCharts").innerHTML = plan.map(([f, t], i) => `<div class="chart-card" style="animation:rise .5s var(--ease) ${i * 60}ms both"><h3>${KIND_LABEL[f]}${t === "bar" ? "별 문항수" : " 비율"}</h3><div class="cv">${r.total ? `<canvas id="sc${i}"></canvas>` : `<div class="empty">기록이 없습니다</div>`}</div></div>`).join("");
