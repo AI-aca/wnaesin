@@ -329,6 +329,8 @@ tr.off td input[data-k="name"]{color:var(--muted)}
 .paper .rp-foot{display:flex;justify-content:space-between;margin-top:12px;padding-top:7px;border-top:1px solid var(--hair);font-size:8.5px;color:var(--mute);letter-spacing:.02em}
 .paper .rp-empty{color:var(--mute);padding:40px 0;text-align:center}
 #exportStage{position:fixed;left:-20000px;top:0;pointer-events:none}
+.paper.xdark{--pbg:radial-gradient(60% 40% at 0% 0%,rgba(139,124,255,.16),transparent 70%),radial-gradient(50% 40% at 100% 100%,rgba(69,212,200,.10),transparent 70%),#0b0f1a;border:none;border-radius:0;box-shadow:none;zoom:1}
+.imgbg{margin:0 8px}.imgbg button{padding:6px 12px;font-size:12.5px}
 @media (max-width:1100px){.g5{grid-template-columns:repeat(3,minmax(0,1fr))}.charts{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-grid{grid-template-columns:1fr}.steps .st span{display:none}}
 @media (max-width:720px){
   .wtop{padding:16px}.stage{padding:6px 16px 40px}.steps{display:none}
@@ -424,13 +426,13 @@ tr.off td input[data-k="name"]{color:var(--muted)}
 
     <!-- 리포트 -->
     <div id="tReport" class="panel hidden">
-      <div class="row" style="margin-bottom:14px"><span class="spacer"></span><span class="muted" style="font-size:12px;margin-right:10px">블로그 등에 올릴 수 있는 PNG 이미지로 저장됩니다</span><button class="primary" id="btnSaveImg">이미지로 저장</button></div>
+      <div class="row" style="margin-bottom:14px"><span class="spacer"></span><span class="muted" style="font-size:12px">블로그 등에 올릴 수 있는 PNG 이미지로 저장됩니다</span><div class="seg imgbg" title="저장할 이미지 배경"><button data-v="light">흰 배경</button><button data-v="dark">검은 배경</button></div><button class="primary" id="btnSaveImg">이미지로 저장</button></div>
       <div id="reportPaper" class="paper"></div>
     </div>
 
     <!-- 통계 -->
     <div id="tStats" class="panel hidden">
-      <div class="row" style="margin-bottom:16px"><div class="seg" id="stYears"></div><span class="spacer"></span><button class="primary" id="btnStatImg">이미지로 저장</button></div>
+      <div class="row" style="margin-bottom:16px"><div class="seg" id="stYears"></div><span class="spacer"></span><div class="seg imgbg" title="저장할 이미지 배경"><button data-v="light">흰 배경</button><button data-v="dark">검은 배경</button></div><button class="primary" id="btnStatImg">이미지로 저장</button></div>
       <div class="sttop">
       <div class="filters">
         <label>학교급<select id="stLevel"></select></label>
@@ -969,15 +971,20 @@ function rpDonut(label, entries, colorOf, nameOf=(k) => k){
 }
 // 화면 밖에서 밝은(.light) 버전을 그려 PNG로 저장
 function loadScript(src){ return new Promise((ok, no) => { const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = () => no(new Error("이미지 저장 도구를 불러오지 못했습니다. 인터넷 연결을 확인하세요.")); document.head.appendChild(el); }); }
+// 저장 이미지 배경 선택 (흰/검은, 마지막 선택 기억)
+let imgTheme = store.get("imgTheme") === "dark" ? "dark" : "light";
+function drawImgBg(){ document.querySelectorAll(".imgbg button").forEach((b) => b.classList.toggle("on", b.dataset.v === imgTheme)); }
+document.querySelectorAll(".imgbg").forEach((g) => g.addEventListener("click", (e) => { const b = e.target.closest("button[data-v]"); if (!b) return; imgTheme = b.dataset.v; store.set("imgTheme", imgTheme); drawImgBg(); }));
+drawImgBg();
 async function savePaperImage(html, filename){
   if (!window.htmlToImage) await loadScript("https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js");
   let stage = $("exportStage"); if (!stage) { stage = document.createElement("div"); stage.id = "exportStage"; document.body.appendChild(stage); }
-  stage.innerHTML = `<div class="paper light">${html}</div>`;
+  stage.innerHTML = `<div class="paper ${imgTheme === "dark" ? "xdark" : "light"}">${html}</div>`;
   const node = stage.firstElementChild;
   node.querySelectorAll(".by").forEach((e) => e.remove());   // 저장 이미지에는 코멘트 작성자 빼기
   try {
     await (document.fonts?.ready || Promise.resolve());
-    const url = await window.htmlToImage.toPng(node, { pixelRatio:2, backgroundColor:"#ffffff" });
+    const url = await window.htmlToImage.toPng(node, { pixelRatio:2, backgroundColor: imgTheme === "dark" ? "#0b0f1a" : "#ffffff" });
     const a = document.createElement("a"); a.href = url; a.download = filename.replace(/[\\/:*?"<>|]/g, "_");
     document.body.appendChild(a); a.click(); a.remove();
   } finally { stage.innerHTML = ""; }
