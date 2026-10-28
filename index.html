@@ -423,6 +423,9 @@ tr.off td input[data-k="name"]{color:var(--muted)}
 .paper .rp-tags span,.paper .rp-foot span,.paper .rp-title small,.paper .rp-brand b,.paper .rp-brand i{white-space:nowrap}
 .paper.xdark{--pbg:radial-gradient(60% 40% at 0% 0%,rgba(139,124,255,.16),transparent 70%),radial-gradient(50% 40% at 100% 100%,rgba(69,212,200,.10),transparent 70%),#0b0f1a;border:none;border-radius:0;box-shadow:none;zoom:1}
 .imgbg{margin:0 8px}
+.upbox{margin-bottom:14px;border-color:rgba(139,124,255,.45)}
+.upreq{font-size:14px;line-height:1.75;color:var(--sub)}
+.upreq .must{color:var(--text);font-weight:800;background:rgba(139,124,255,.18);padding:2px 8px;border-radius:8px}
 .pdfbtn{margin-left:8px;background:linear-gradient(135deg,#f0c674,#e8956b);border-color:transparent;color:#1a1206;font-weight:700}
 .pdfbtn:hover{filter:brightness(1.06)}.imgbg button{padding:6px 12px;font-size:12.5px}
 @media (max-width:1100px){.g5{grid-template-columns:repeat(3,minmax(0,1fr))}.charts{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-grid{grid-template-columns:1fr}.steps .st span{display:none}}
@@ -495,14 +498,16 @@ tr.off td input[data-k="name"]{color:var(--muted)}
         <div class="ptitle">
           <h2 id="inTitle"></h2><span class="muted" id="inMeta"></span>
           <span class="spacer"></span>
-          <button id="btnPasteOpen">시트에서 붙여넣기</button>
+          <button class="hidden" id="btnUpUndo" title="업로드 적용 전 내용으로 되돌립니다. 이미 저장했다면 되돌린 뒤 다시 저장하면 원래대로 돌아갑니다.">↶ 업로드 전으로 되돌리기</button>
+          <button id="btnUpOpen">엑셀(시트) 업로드</button>
+          <input type="file" id="upFile" accept=".xlsx,.xls,.csv" class="hidden">
           <button class="danger hidden" id="btnExamDelete">이 시험 삭제</button>
           <button class="primary" id="btnSave">저장</button>
         </div>
-        <div id="pasteBox" class="card hidden" style="margin-bottom:14px">
-          <p class="muted" style="margin-bottom:10px">구글시트에서 문항 행을 복사해 붙여넣으세요. 첫 줄에 제목(학교, 학기, 문항번호, 형태…)이 있으면 제목 기준으로, 없으면 아래 표의 칸 순서대로 들어갑니다. 현재 문항은 붙여넣은 내용으로 <b>바뀝니다</b>.</p>
-          <textarea id="pasteText" rows="6"></textarea>
-          <div class="row" style="margin-top:10px"><button class="primary" id="btnPasteApply">적용</button><button id="btnPasteClose">닫기</button><span class="muted" id="pasteInfo"></span></div>
+        <div id="upBox" class="card hidden upbox">
+          <div class="upreq" id="upReq"></div>
+          <div id="upInfo" class="iminfo"></div>
+          <div class="row" style="margin-top:12px"><button id="btnUpPick">다른 파일 선택</button><span class="spacer"></span><button id="btnUpClose">닫기</button><button class="primary" id="btnUpApply" disabled>적용</button></div>
         </div>
         <div class="qwrap"><table class="q" id="qTable"></table></div>
         <div class="row" style="margin:12px 0 18px">
@@ -573,8 +578,8 @@ tr.off td input[data-k="name"]{color:var(--muted)}
         </div>
         <div class="card" style="grid-column:1/-1">
           <h3>구글시트 기록 가져오기 <small id="imRegionNote"></small></h3>
-          <p class="muted" style="margin-bottom:12px">구글시트에서 내려받은 <b>CSV 파일</b>(문항 기록·총평 파일)을 여러 개 한꺼번에 고르세요. 문항 파일인지 총평 파일인지는 자동으로 구분합니다. 학교·학기·중간/기말·학년이 같은 시험은 문항이 <b>교체</b>됩니다(중복으로 쌓이지 않음). 없는 학교와 선택 목록 값은 이 센터에 자동으로 추가됩니다.</p>
-          <label class="f" style="margin-bottom:8px">CSV 파일 선택 (여러 개 가능 · 파일 이름에 수학/과학/영어가 있으면 과목 자동 인식)<input type="file" id="imFiles" accept=".csv,.tsv,text/csv" multiple></label>
+          <p class="muted" style="margin-bottom:12px">구글시트 <b>엑셀(.xlsx) 또는 CSV 파일</b>(문항 기록·총평)을 여러 개 한꺼번에 고르세요. 엑셀은 시트(탭)를 모두 읽습니다. 문항 파일인지 총평 파일인지는 자동으로 구분합니다. 학교·학기·중간/기말·학년이 같은 시험은 문항이 <b>교체</b>됩니다(중복으로 쌓이지 않음). 없는 학교와 선택 목록 값은 이 센터에 자동으로 추가됩니다.</p>
+          <label class="f" style="margin-bottom:8px">엑셀(.xlsx, .xls) 또는 CSV 파일 선택 (여러 개 가능 · 엑셀은 모든 시트를 읽음 · 파일 이름에 수학/과학/영어가 있으면 과목 자동 인식)<input type="file" id="imFiles" accept=".xlsx,.xls,.csv,.tsv,text/csv" multiple></label>
           <div id="imFileList" class="filelist" style="font-size:12px;margin-bottom:12px"></div>
           <div class="row" style="margin-top:10px"><button id="btnImPreview">미리보기</button><button class="primary" id="btnImRun" disabled>가져오기 실행</button><span class="muted" style="font-size:12px">미리보기로 올라갈 내용을 먼저 확인한 뒤 가져오기를 누르세요. (아직 저장되지 않음)</span></div>
           <div id="imInfo" class="iminfo"></div>
@@ -909,6 +914,7 @@ const keyArgs = () => ({ year:S.year, subject:S.subject, school_id:S.schoolId, g
 // ===== 문항 입력 =====
 async function openEditor(){
   $("inHint").classList.add("hidden"); $("inEditor").classList.remove("hidden");
+  S.upUndo = null; $("btnUpUndo").classList.add("hidden"); $("upBox").classList.add("hidden");
   const sc = schoolById(S.schoolId);
   $("inTitle").textContent = `${sc?.name} ${S.grade}학년 ${S.sem}학기 ${S.term}고사`;
   $("inMeta").textContent = "불러오는 중…";
@@ -995,18 +1001,101 @@ $("btnExamDelete").onclick = () => run($("btnExamDelete"), async () => {
   await api("examDelete", { id:S.exam.id });
   S.dirty = false; toast("삭제했습니다."); await loadExams(); loadSideSummary(); await openEditor();
 });
-$("btnPasteOpen").onclick = () => $("pasteBox").classList.toggle("hidden");
-$("btnPasteClose").onclick = () => $("pasteBox").classList.add("hidden");
-$("btnPasteApply").onclick = () => {
-  const grid = parseTSV($("pasteText").value);
-  if (!grid.length) return toast("붙여넣은 내용이 없습니다.", true);
-  const hmap = headerMap(grid[0]);
-  let rows;
-  if (Object.keys(hmap).length >= 2) rows = grid.slice(1).map((r) => rowFromHeader(r, hmap));
-  else { const cols = layout(S.subject, S.level); rows = grid.map((r) => Object.fromEntries(QF.map((f) => [f, (r[cols.indexOf(f)] ?? "").trim()]))); }
-  rows = rows.filter((r) => QF.some((f) => r[f]));
-  S.rows = rows.map((r) => Object.fromEntries(QF.map((f) => [f, normValue(S.subject, f, r[f] || "")])));
-  S.dirty = true; renderTable(); $("pasteInfo").textContent = `${S.rows.length}문항을 넣었습니다. 확인 후 저장하세요.`;
+// ===== 엑셀(시트) 업로드: 지금 시험의 문항·총평·작성자 =====
+async function readSheets(file){
+  if (/\.(xlsx|xls)$/i.test(file.name)) {
+    if (!window.XLSX) await loadScript("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js");
+    const wb = window.XLSX.read(await file.arrayBuffer(), { type:"array" });
+    return wb.SheetNames.map((n) => ({ name:n, grid:window.XLSX.utils.sheet_to_json(wb.Sheets[n], { header:1, raw:false, defval:"" }).map((r) => r.map((c) => String(c ?? ""))) }));
+  }
+  let text = await file.text(); text = text.replace(/^﻿/, "");
+  return [{ name:file.name, grid:parseDelimited(text, /\.tsv$/i.test(file.name) ? "\t" : ",") }];
+}
+const upRequired = () => layout(S.subject, S.level).filter((f) => f !== "note" || subjLayout(S.subject) === "english");
+const LABEL_C = /^(문항\s*분석\s*)?(총평|코멘트)/, LABEL_A = /^(코멘트\s*)?(작성자|담당자)/;
+function extractExam(sheets){
+  const req = upRequired(), sc = schoolById(S.schoolId);
+  const out = { qs:[], comment:"", author:"", used:[], errors:[] };
+  const sameExam = (o) => {
+    if (o.school !== undefined && o.school && sc && o.school !== sc.name) return false;
+    if (o.grade !== undefined && o.grade && Number(o.grade) !== S.grade) return false;
+    if (o.term !== undefined && o.term && normTerm(o.term) !== S.term) return false;
+    if (o.semtext !== undefined && o.semtext) { const p = parseSem(o.semtext); if (p && (p.semester !== S.sem || p.year !== S.year)) return false; if (!p && !new RegExp(`${S.sem}\\s*학기`).test(o.semtext)) return false; }
+    return true;
+  };
+  for (const { name, grid } of sheets) {
+    let hi = -1, m = {};
+    for (let i = 0; i < Math.min(grid.length, 15); i++) { const mm = headerMap(grid[i]); if (Object.keys(mm).filter((k) => QF.includes(k) || k === "comment").length >= 1 && (req.some((k) => k in mm) || "comment" in mm)) { hi = i; m = mm; break; } }
+    const qCols = req.filter((k) => k in m);
+    let qs = [], comment = "", author = "";
+    // 표 아래 '총평'·'작성자' 행 (헤더가 없어도 찾음)
+    const labelAt = (r) => { const c = r.findIndex((x) => String(x).trim()); return c < 0 ? null : { c, t:String(r[c]).trim() }; };
+    const labelRows = new Set();
+    grid.forEach((r, i) => {
+      if (i === hi) return;
+      const L = labelAt(r); if (!L) return;
+      const rest = r.slice(L.c + 1).map((x) => String(x).trim()).filter(Boolean).join(" ");
+      if (LABEL_C.test(L.t) && L.t.length <= 12) {
+        labelRows.add(i); let txt = rest || L.t.replace(LABEL_C, "").replace(/^[\s:：]+/, "");
+        if (!txt) { const lines = []; for (let j = i + 1; j < grid.length; j++) { const t = grid[j].map((x) => String(x).trim()).filter(Boolean).join(" "); if (!t) break; const L2 = labelAt(grid[j]); if (L2 && LABEL_A.test(L2.t)) break; lines.push(t); labelRows.add(j); } txt = lines.join("\n"); }
+        if (txt && !comment) comment = txt;
+      } else if (LABEL_A.test(L.t) && L.t.length <= 10) { labelRows.add(i); if (rest && !author) author = rest; }
+    });
+    if (hi >= 0) {
+      const rows = grid.slice(hi + 1).map((r, k) => ({ i:hi + 1 + k, o:rowFromHeader(r, m) })).filter(({ i }) => !labelRows.has(i)).filter(({ o }) => sameExam(o));
+      if (qCols.length) {
+        const miss = req.filter((k) => !(k in m));
+        if (miss.length) { out.errors.push(`'${name}' 시트에 ${miss.map((k) => FIELD[k].label).join(", ")} 열이 없습니다.`); continue; }
+        qs = rows.map(({ o }) => o).filter((o) => QF.some((f) => o[f]));
+      }
+      if ("comment" in m && !comment) comment = (rows.find(({ o }) => o.comment) || {}).o?.comment || "";
+      if ("author" in m && !author) author = (rows.find(({ o }) => o.author) || {}).o?.author || "";
+    }
+    if (qs.length || comment || author) {
+      out.used.push(`${name}${qs.length ? ` (문항 ${qs.length})` : ""}${comment ? " (총평)" : ""}`);
+      if (qs.length && !out.qs.length) out.qs = qs;
+      if (comment && !out.comment) out.comment = comment;
+      if (author && !out.author) out.author = author;
+    }
+  }
+  return out;
+}
+let upPlan = null;
+function drawUpReq(){
+  const names = upRequired().map((k) => FIELD[k].label);
+  $("upReq").innerHTML = `<b>엑셀(.xlsx, .xls) 또는 CSV 파일</b>로 지금 시험(${esc(schoolById(S.schoolId)?.name || "")} ${S.grade}학년 ${S.sem}학기 ${esc(S.term)})의 문항을 한꺼번에 넣습니다.<br>
+    반드시 <span class="must">${names.join(" · ")}</span> 열이 있어야 합니다. 총평(코멘트)·작성자는 열로 있거나 표 아래 '총평'·'작성자' 행으로 있으면 함께 들어갑니다.<br>
+    <span class="muted">학교·학기·중간/기말·학년 열이 있으면 지금 시험에 해당하는 행만 골라 넣습니다. 적용하면 지금 문항이 바뀌며, <b>저장</b>을 눌러야 최종 저장됩니다.</span>`;
+}
+$("btnUpOpen").onclick = () => { if (!S.subject || !S.schoolId || !S.sem) return toast("먼저 왼쪽에서 시험을 고르세요.", true); $("upFile").value = ""; $("upFile").click(); };
+$("btnUpPick").onclick = () => { $("upFile").value = ""; $("upFile").click(); };
+$("btnUpClose").onclick = () => { $("upBox").classList.add("hidden"); upPlan = null; };
+$("upFile").onchange = () => run($("btnUpOpen"), async () => {
+  const f = $("upFile").files[0]; if (!f) return;
+  drawUpReq(); $("upBox").classList.remove("hidden"); $("btnUpApply").disabled = true; upPlan = null;
+  $("upInfo").textContent = "읽는 중…";
+  const r = extractExam(await readSheets(f));
+  if (r.errors.length && !r.qs.length && !r.comment) { $("upInfo").innerHTML = `<b style="color:var(--bad)">넣을 수 없습니다</b><br>${r.errors.map(esc).join("<br>")}`; return; }
+  if (!r.qs.length && !r.comment && !r.author) { $("upInfo").innerHTML = `<b style="color:var(--bad)">읽을 내용이 없습니다</b><br>제목 줄에 ${upRequired().map((k) => FIELD[k].label).join(", ")} 열이 있는지, 지금 고른 시험의 행이 있는지 확인하세요.`; return; }
+  upPlan = r;
+  $("upInfo").innerHTML = `<b>미리보기</b> · ${esc(f.name)}<br>문항 <b>${r.qs.length}개</b>${r.qs.length ? "" : " (문항은 그대로 둡니다)"} · 총평 <b>${r.comment ? "있음" : "없음"}</b> · 작성자 <b>${esc(r.author || "없음")}</b>
+    <br><span class="muted">읽은 시트: ${esc(r.used.join(", "))}</span>${r.errors.length ? `<br><span style="color:var(--warn)">${r.errors.map(esc).join("<br>")}</span>` : ""}`;
+  $("btnUpApply").disabled = false;
+});
+$("btnUpUndo").onclick = () => {
+  if (!S.upUndo) return;
+  S.rows = S.upUndo.rows; $("inComment").value = S.upUndo.comment; $("inAuthor").value = S.upUndo.author; S.dirty = S.upUndo.dirty;
+  S.upUndo = null; $("btnUpUndo").classList.add("hidden"); renderTable(); toast("업로드 전 내용으로 되돌렸습니다.");
+};
+$("btnUpApply").onclick = () => {
+  if (!upPlan) return;
+  S.upUndo = { rows:S.rows.map((r) => ({ ...r })), comment:$("inComment").value, author:$("inAuthor").value, dirty:S.dirty };
+  $("btnUpUndo").classList.remove("hidden");
+  if (upPlan.qs.length) S.rows = upPlan.qs.map((o) => Object.fromEntries(QF.map((f) => [f, normValue(S.subject, f, o[f] || "")])));
+  if (upPlan.comment) $("inComment").value = upPlan.comment;
+  if (upPlan.author) $("inAuthor").value = upPlan.author;
+  S.dirty = true; renderTable(); $("upBox").classList.add("hidden");
+  toast(`${upPlan.qs.length ? upPlan.qs.length + "문항" : ""}${upPlan.comment ? (upPlan.qs.length ? "과 " : "") + "총평" : ""}을 넣었습니다. 확인 후 저장하세요.`); upPlan = null;
 };
 
 // ===== 구글시트 해석 =====
@@ -1504,10 +1593,12 @@ function classify(grid){
 $("imFiles").onchange = async () => {
   imFiles = [];
   for (const f of $("imFiles").files) {
-    let text = await f.text(); text = text.replace(/^﻿/, "");
-    const grid = parseDelimited(text, /\.tsv$/i.test(f.name) ? "\t" : ",");
-    const subj = regionSubjects().find((x) => f.name.includes(x)) || null;
-    imFiles.push({ name:f.name, subject:subj, guessed:!!subj, kind:classify(grid), grid });
+    let sheets; try { sheets = await readSheets(f); } catch(e) { toast(e.message, true); continue; }
+    for (const sh of sheets) {
+      const name = sheets.length > 1 || /\.(xlsx|xls)$/i.test(f.name) ? `${f.name} - ${sh.name}` : f.name;
+      const subj = regionSubjects().find((x) => name.includes(x)) || null;
+      imFiles.push({ name, subject:subj, guessed:!!subj, kind:classify(sh.grid), grid:sh.grid });
+    }
   }
   for (const f of imFiles) if (!f.subject) {
     const prefix = f.name.split(" - ")[0];
