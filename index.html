@@ -316,7 +316,7 @@ tr.off td input[data-k="name"]{color:var(--muted)}
 .paper .rp-q tr:nth-child(even) td{background:var(--zebra)}
 .paper .rp-q td.no{font-weight:800;color:var(--ink);width:1%;min-width:22px;white-space:nowrap;text-align:center;font-variant-numeric:tabular-nums}
 .paper .rp-q th.no{text-align:center}
-.paper .rp-q td.u{color:var(--ink2);font-size:9.5px}
+.paper .rp-q td.u{color:var(--ink2);font-size:9.5px;word-break:keep-all}
 .paper .rp-q .note{display:block;color:var(--mute);font-size:9px;margin-top:1px}
 .paper .pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:9px;font-weight:700;white-space:nowrap;line-height:1.5}
 .paper .pill.f{background:var(--chip);color:var(--ink2)}
@@ -1009,7 +1009,7 @@ function renderReport(exam, qs){
   // 표
   let rows;
   if (!eng) {
-    rows = `<thead><tr><th class="no">No.</th><th style="width:44px">난이도</th><th style="width:118px">형태 · 유형</th><th>세부 내용</th><th style="width:96px">단원</th></tr></thead><tbody>` +
+    rows = `<thead><tr><th class="no">No.</th><th style="width:44px">난이도</th><th style="width:118px">형태 · 유형</th><th>세부 내용</th><th style="width:150px">단원</th></tr></thead><tbody>` +
       qs.map((q) => `<tr><td class="no">${esc(q.no)}</td><td>${dPill(q.difficulty)}</td><td class="nw">${q.form ? `<span class="pill f">${esc(q.form)}</span>` : ""}${q.qtype ? `<span class="pill t">${esc(q.qtype)}</span>` : ""}</td><td>${esc(q.content)}${q.note && q.note.trim() !== String(q.content || "").trim() ? `<span class="note">${esc(q.note)}</span>` : ""}</td><td class="u">${esc(cleanUnit(q.unit))}</td></tr>`).join("");
   } else {
     rows = `<thead><tr><th class="no">No.</th><th style="width:46px">형태</th><th style="width:64px">출처</th><th style="width:74px">유형</th><th style="width:72px">${FIELD[dkey].label}</th><th>비고</th></tr></thead><tbody>` +
