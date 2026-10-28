@@ -420,7 +420,9 @@ tr.off td input[data-k="name"]{color:var(--muted)}
 #exportStage .paper{font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo","Noto Sans KR","Noto Sans CJK KR",sans-serif}
 .paper .rp-tags span,.paper .rp-foot span,.paper .rp-title small,.paper .rp-brand b,.paper .rp-brand i{white-space:nowrap}
 .paper.xdark{--pbg:radial-gradient(60% 40% at 0% 0%,rgba(139,124,255,.16),transparent 70%),radial-gradient(50% 40% at 100% 100%,rgba(69,212,200,.10),transparent 70%),#0b0f1a;border:none;border-radius:0;box-shadow:none;zoom:1}
-.imgbg{margin:0 8px}.imgbg button{padding:6px 12px;font-size:12.5px}
+.imgbg{margin:0 8px}
+.pdfbtn{margin-left:8px;background:linear-gradient(135deg,#f0c674,#e8956b);border-color:transparent;color:#1a1206;font-weight:700}
+.pdfbtn:hover{filter:brightness(1.06)}.imgbg button{padding:6px 12px;font-size:12.5px}
 @media (max-width:1100px){.g5{grid-template-columns:repeat(3,minmax(0,1fr))}.charts{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-grid{grid-template-columns:1fr}.steps .st span{display:none}}
 @media (max-width:720px){
   .wtop{padding:16px}.stage{padding:6px 16px 40px}.steps{display:none}
@@ -517,7 +519,7 @@ tr.off td input[data-k="name"]{color:var(--muted)}
 
     <!-- 리포트 -->
     <div id="tReport" class="panel hidden">
-      <div class="row" style="margin-bottom:14px"><span class="spacer"></span><span class="muted" style="font-size:12px">블로그 등에 올릴 수 있는 PNG 이미지로 저장됩니다</span><div class="seg imgbg" title="저장할 이미지 배경"><button data-v="light">흰 배경</button><button data-v="dark">검은 배경</button></div><button class="primary" id="btnSaveImg">이미지로 저장</button></div>
+      <div class="row" style="margin-bottom:14px"><span class="spacer"></span><span class="muted" style="font-size:12px">이미지(PNG)는 블로그용 한 장, PDF는 A4 여러 장으로 저장됩니다</span><div class="seg imgbg" title="저장할 배경"><button data-v="light">흰 배경</button><button data-v="dark">검은 배경</button></div><button class="primary" id="btnSaveImg">이미지로 저장</button><button class="pdfbtn" id="btnSavePdf">PDF로 저장</button></div>
       <div id="reportPaper"></div>
     </div>
 
@@ -1089,6 +1091,48 @@ let imgTheme = store.get("imgTheme") === "light" ? "light" : "dark";   // 기본
 function drawImgBg(){ document.querySelectorAll(".imgbg button").forEach((b) => b.classList.toggle("on", b.dataset.v === imgTheme)); }
 document.querySelectorAll(".imgbg").forEach((g) => g.addEventListener("click", (e) => { const b = e.target.closest("button[data-v]"); if (!b) return; imgTheme = b.dataset.v; store.set("imgTheme", imgTheme); drawImgBg(); }));
 drawImgBg();
+// 리포트 → A4 PDF (길면 여러 장, 표 줄 중간에서 끊기지 않게)
+async function savePaperPdf(html, filename){
+  if (!window.htmlToImage) await loadScript("https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js");
+  if (!window.jspdf) await loadScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js");
+  let stage = $("exportStage"); if (!stage) { stage = document.createElement("div"); stage.id = "exportStage"; document.body.appendChild(stage); }
+  const bg = imgTheme === "dark" ? "#0b0f1a" : "#ffffff";
+  stage.innerHTML = `<div class="paper ${imgTheme === "dark" ? "xdark" : "light"}">${html}</div>`;
+  const node = stage.firstElementChild;
+  node.querySelectorAll(".by").forEach((e) => e.remove());
+  try {
+    await (document.fonts?.ready || Promise.resolve());
+    const W = node.offsetWidth, H = node.offsetHeight;          // 210mm 폭 (px)
+    const pageH = W * 297 / 210, topPad = W * 12 / 210;         // A4 높이, 2쪽부터 위 여백 12mm
+    const base = node.getBoundingClientRect().top;
+    // 끊어도 되는 위치: 표의 각 줄 시작, 큰 블록 시작
+    const cuts = [...node.querySelectorAll(".rp-q tr, .rp-panels, .rp-kpis, .rp-body, .rp-comment, .rp-comment p, .rp-foot")]
+      .map((e) => Math.round(e.getBoundingClientRect().top - base)).filter((y) => y > 0).sort((a, b) => a - b);
+    const pages = []; let start = 0;
+    while (start < H - 2) {
+      const room = pages.length ? pageH - topPad : pageH;
+      if (H - start <= room) { pages.push([start, H]); break; }
+      const ok = cuts.filter((y) => y > start + room * 0.3 && y <= start + room);
+      const end = ok.length ? ok[ok.length - 1] : start + room;
+      pages.push([start, end]); start = end;
+    }
+    const scale = 2;
+    const canvas = await window.htmlToImage.toCanvas(node, { pixelRatio:scale, skipFonts:true, backgroundColor:bg });
+    const pdf = new window.jspdf.jsPDF({ unit:"mm", format:"a4", orientation:"portrait" });
+    const mmPerPx = 210 / W;
+    pages.forEach(([y0, y1], i) => {
+      if (i) pdf.addPage();
+      pdf.setFillColor(bg); pdf.rect(0, 0, 210, 297, "F");
+      const c = document.createElement("canvas"); c.width = canvas.width; c.height = Math.round((y1 - y0) * scale);
+      const g = c.getContext("2d"); g.fillStyle = bg; g.fillRect(0, 0, c.width, c.height);
+      g.drawImage(canvas, 0, Math.round(y0 * scale), canvas.width, c.height, 0, 0, c.width, c.height);
+      pdf.addImage(c.toDataURL("image/jpeg", 0.92), "JPEG", 0, i ? 12 : 0, 210, (y1 - y0) * mmPerPx);
+      pdf.setFontSize(8); pdf.setTextColor(imgTheme === "dark" ? 140 : 150); pdf.text(`${i + 1} / ${pages.length}`, 200, 291, { align:"right" });
+    });
+    pdf.save(filename.replace(/[\\/:*?"<>|]/g, "_"));
+    return pages.length;
+  } finally { stage.innerHTML = ""; }
+}
 async function savePaperImage(html, filename){
   if (!window.htmlToImage) await loadScript("https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js");
   let stage = $("exportStage"); if (!stage) { stage = document.createElement("div"); stage.id = "exportStage"; document.body.appendChild(stage); }
@@ -1191,6 +1235,12 @@ function renderReport(exam, qs){
     ${String(exam?.comment || "").trim() ? `<div class="rp-comment"><h4 class="rp-sec">총평</h4><p>${esc(String(exam.comment).trim())}</p>${exam?.author ? `<div class="by">작성 <b>${esc(exam.author)}</b></div>` : ""}</div>` : ""}
     <div class="rp-foot"><span>${esc(centerName())}</span><span>학교 내신분석 기록관리</span></div>`;
 }
+$("btnSavePdf").onclick = () => run($("btnSavePdf"), async () => {
+  if (!$("reportPaper").querySelector(".rs") || !S.rpExport) throw new Error("왼쪽에서 시험을 먼저 고르세요.");
+  const sc = schoolById(S.schoolId);
+  const n = await savePaperPdf(S.rpExport, `${S.year}학년도_${sc?.name || ""}_${S.grade}학년_${S.sem}학기_${S.term}_${S.subject}.pdf`);
+  toast(`PDF로 저장했습니다. (A4 ${n}장)`);
+});
 // 리포트를 PNG 이미지로 저장 (블로그용, 밝은 디자인)
 $("btnSaveImg").onclick = () => run($("btnSaveImg"), async () => {
   if (!$("reportPaper").querySelector(".rs") || !S.rpExport) throw new Error("왼쪽에서 시험을 먼저 고르세요.");
