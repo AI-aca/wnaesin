@@ -227,6 +227,14 @@ table.q td.act button:hover{background:var(--glass2);color:var(--text)}
 .kpi{padding:18px 20px;border-radius:16px;background:var(--glass);border:1px solid var(--line)}
 .kpi b{display:block;font-size:30px;font-weight:800;letter-spacing:-.03em}
 .kpi span{color:var(--muted);font-size:12px}
+/* 통계: 필터 오른쪽에 카드 */
+.sttop{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 22px;margin-bottom:18px}
+.sttop .filters{margin-bottom:0}
+.sttop .kpis{display:flex;flex-wrap:wrap;gap:10px;margin:0;flex:1 1 auto}
+.sttop .kpi{padding:12px 18px;border-radius:14px;min-width:104px;display:flex;flex-direction:column;justify-content:center}
+.sttop .kpi:last-child{flex:0 1 auto;min-width:0}
+.sttop .kpi b{font-size:24px;line-height:1.15}
+.sttop .kpi span{margin-top:2px}
 .charts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .chart-card{min-width:0;overflow:hidden;padding:18px;border-radius:18px;background:var(--glass);border:1px solid var(--line);min-height:350px;display:flex;flex-direction:column}
 .chart-card h3{font-size:14px;font-weight:700;margin-bottom:10px;color:var(--sub)}
@@ -384,6 +392,7 @@ tr.off td input[data-k="name"]{color:var(--muted)}
     <!-- 통계 -->
     <div id="tStats" class="panel hidden">
       <div class="row" style="margin-bottom:16px"><div class="seg" id="stYears"></div></div>
+      <div class="sttop">
       <div class="filters">
         <label>학교급<select id="stLevel"></select></label>
         <label>학교<select id="stSchool"></select></label>
@@ -392,6 +401,7 @@ tr.off td input[data-k="name"]{color:var(--muted)}
         <label>중간/기말<select id="stTerm"><option value="">전체</option><option>중간</option><option>기말</option></select></label>
       </div>
       <div class="kpis" id="stKpis"></div>
+      </div>
       <div class="charts" id="stCharts"></div>
     </div>
 
