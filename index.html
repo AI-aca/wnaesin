@@ -1184,8 +1184,11 @@ document.querySelectorAll(".imgbg").forEach((g) => g.addEventListener("click", (
 drawImgBg();
 // 리포트 → A4 PDF (길면 여러 장, 표 줄 중간에서 끊기지 않게)
 // 파일 이름 끝에 배경 구분 붙이기 (…_흰배경.png / …_검은배경.pdf)
+// 저장 전 확인: 어떤 배경으로 저장하는지
+const bgConfirm = (kind) => confirm(`${imgTheme === "dark" ? "검은 배경(어두운색)" : "흰 배경(밝은색)"}으로 ${kind} 저장하시겠습니까?\n\n다른 배경으로 저장하려면 [취소]를 누르고 위의 '흰 배경 / 검은 배경'을 바꿔 주세요.`);
 const bgName = (filename) => filename.replace(/(\.[a-z]+)$/i, `_${imgTheme === "dark" ? "검은배경" : "흰배경"}$1`);
 async function savePaperPdf(html, filename){
+  if (!bgConfirm("PDF를")) return 0;
   filename = bgName(filename);
   if (!window.htmlToImage) await loadScript("https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js");
   if (!window.jspdf) await loadScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js");
@@ -1228,6 +1231,7 @@ async function savePaperPdf(html, filename){
   } finally { stage.innerHTML = ""; }
 }
 async function savePaperImage(html, filename){
+  if (!bgConfirm("이미지를")) return false;
   filename = bgName(filename);
   if (!window.htmlToImage) await loadScript("https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js");
   let stage = $("exportStage"); if (!stage) { stage = document.createElement("div"); stage.id = "exportStage"; document.body.appendChild(stage); }
@@ -1239,6 +1243,7 @@ async function savePaperImage(html, filename){
     const url = await window.htmlToImage.toPng(node, { pixelRatio:2, skipFonts:true, backgroundColor: imgTheme === "dark" ? "#0b0f1a" : "#ffffff" });
     const a = document.createElement("a"); a.href = url; a.download = filename.replace(/[\\/:*?"<>|]/g, "_");
     document.body.appendChild(a); a.click(); a.remove();
+    return true;
   } finally { stage.innerHTML = ""; }
 }
 function renderReport(exam, qs){
@@ -1334,13 +1339,13 @@ $("btnSavePdf").onclick = () => run($("btnSavePdf"), async () => {
   if (!$("reportPaper").querySelector(".rs") || !S.rpExport) throw new Error("왼쪽에서 시험을 먼저 고르세요.");
   const sc = schoolById(S.schoolId);
   const n = await savePaperPdf(S.rpExport, `${S.year}학년도_${sc?.name || ""}_${S.grade}학년_${S.sem}학기_${S.term}_${S.subject}.pdf`);
-  toast(`PDF로 저장했습니다. (A4 ${n}장)`);
+  if (n) toast(`PDF로 저장했습니다. (A4 ${n}장)`);
 });
 // 리포트를 PNG 이미지로 저장 (블로그용, 밝은 디자인)
 $("btnSaveImg").onclick = () => run($("btnSaveImg"), async () => {
   if (!$("reportPaper").querySelector(".rs") || !S.rpExport) throw new Error("왼쪽에서 시험을 먼저 고르세요.");
   const sc = schoolById(S.schoolId);
-  await savePaperImage(S.rpExport, `${S.year}학년도_${sc?.name || ""}_${S.grade}학년_${S.sem}학기_${S.term}_${S.subject}.png`);
+  if (!(await savePaperImage(S.rpExport, `${S.year}학년도_${sc?.name || ""}_${S.grade}학년_${S.sem}학기_${S.term}_${S.subject}.png`))) return;
   toast("이미지를 저장했습니다.");
 });
 
@@ -1419,7 +1424,7 @@ function statsImageHtml(){
 $("btnStatImg").onclick = () => run($("btnStatImg"), async () => {
   if (!S.lastStats || !S.lastStats.r.total) throw new Error("이 조건에는 저장할 기록이 없습니다.");
   const a = S.lastStats.args, sc = a.school_id ? schoolById(Number(a.school_id)) : null;
-  await savePaperImage(statsImageHtml(), `${a.year}학년도_${sc ? sc.name : RN() + "_전체"}_${a.grade ? a.grade + "학년" : "전학년"}${a.semester ? "_" + a.semester + "학기" : ""}${a.term ? "_" + a.term : ""}_${S.subject}_출제통계.png`);
+  if (!(await savePaperImage(statsImageHtml(), `${a.year}학년도_${sc ? sc.name : RN() + "_전체"}_${a.grade ? a.grade + "학년" : "전학년"}${a.semester ? "_" + a.semester + "학기" : ""}${a.term ? "_" + a.term : ""}_${S.subject}_출제통계.png`))) return;
   toast("이미지를 저장했습니다.");
 });
 function makeChart(canvas, type, data, total){
