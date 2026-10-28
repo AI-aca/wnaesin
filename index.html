@@ -173,6 +173,8 @@ label.f{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--mu
 .side .sitem i{width:7px;height:7px;border-radius:50%;background:var(--line2);display:inline-block;margin-right:8px;vertical-align:middle}
 .side .sitem i.has{background:var(--a2);box-shadow:0 0 8px var(--a2)}
 .side select{width:100%}
+.iminfo:empty{display:none}
+.iminfo{margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--glass2);border:1px solid rgba(139,124,255,.45);font-size:13.5px;line-height:1.7;color:var(--text)}
 .side select.on{background:linear-gradient(135deg,rgba(139,124,255,.32),rgba(69,212,200,.18));border-color:rgba(139,124,255,.65);color:var(--text);font-weight:700}
 .side select option{background:#0d1120;color:var(--text);font-weight:400}
 .side select.unset{color:var(--muted)}
@@ -433,7 +435,8 @@ tr.off td input[data-k="name"]{color:var(--muted)}
             <label class="f" style="flex:1">문항 기록 탭<textarea id="imQ" rows="6"></textarea></label>
             <label class="f" style="flex:1">총평/코멘트 탭<textarea id="imC" rows="6"></textarea></label>
           </div>
-          <div class="row" style="margin-top:10px"><button id="btnImPreview">미리보기</button><button class="primary" id="btnImRun" disabled>가져오기 실행</button><span class="muted" id="imInfo"></span></div>
+          <div class="row" style="margin-top:10px"><button id="btnImPreview">미리보기</button><button class="primary" id="btnImRun" disabled>가져오기 실행</button><span class="muted" style="font-size:12px">미리보기로 올라갈 내용을 먼저 확인한 뒤 가져오기를 누르세요. (아직 저장되지 않음)</span></div>
+          <div id="imInfo" class="iminfo"></div>
         </div>
         <div class="card">
           <h3>보고서 센터 이름</h3>
@@ -1232,6 +1235,8 @@ $("btnImPreview").onclick = () => {
       (big.length ? ` · <span style="color:var(--warn)">문항 40개 넘는 시험 ${big.map((g) => `${g.school} ${g.year % 100}년 ${g.semester}학기 ${g.term} ${g.grade}학년(${g.questions.length})`).join(", ")} — 같은 시험이 두 번 들어갔는지 확인</span>` : "") +
       (r.skipped.length ? ` · <span style="color:var(--warn)">건너뜀 ${r.skipped.length}행 (${esc(r.skipped.slice(0, 4).join(", "))}${r.skipped.length > 4 ? " …" : ""})</span>` : "");
     $("btnImRun").disabled = !r.groups.length;
+    $("imInfo").insertAdjacentHTML("afterbegin", `<b>미리보기</b> (아직 저장되지 않았습니다. 내용이 맞으면 <b>가져오기 실행</b>을 누르세요)<br>`);
+    $("imInfo").scrollIntoView({ block:"nearest", behavior:"smooth" });
   } catch(e) { toast(e.message, true); resetImport(); }
 };
 $("btnImRun").onclick = () => run($("btnImRun"), async () => {
