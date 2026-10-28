@@ -515,7 +515,7 @@ const DEFAULT_API = "https://xphtctpbysbbdyjaxidh.supabase.co/functions/v1/naesi
 const API = new URLSearchParams(location.search).get("api") || DEFAULT_API;
 const LEVELS = ["중","고"];
 const REGION_EN = { 송도:"SONGDO", 한강:"HANGANG", 청라:"CHEONGNA", 산본:"SANBON", 세종:"SEJONG", 배곧:"BAEGOT" };
-const REGION_DESC = { 송도:"인천 송도국제도시", 한강:"김포 한강신도시", 청라:"인천 청라국제도시", 산본:"군포 산본신도시", 세종:"세종특별자치시", 배곧:"시흥 배곧신도시" };
+const REGION_DESC = { 송도:"인천광역시 연수구", 한강:"경기도 김포시", 청라:"인천광역시 서구", 산본:"경기도 군포시", 세종:"세종특별자치시", 배곧:"경기도 시흥시" };
 const SUBJ_STYLE = { 수학:{ ic:"∑", bg:"linear-gradient(135deg,#a78bfa,#818cf8)", en:"MATHEMATICS" }, 과학:{ ic:"⚛", bg:"linear-gradient(135deg,#5eead4,#38bdf8)", en:"SCIENCE" }, 영어:{ ic:"A", bg:"linear-gradient(135deg,#fcd34d,#f59e0b)", en:"ENGLISH" },
   국어:{ ic:"가", bg:"linear-gradient(135deg,#f9a8d4,#f472b6)", en:"KOREAN" }, 사회:{ ic:"◎", bg:"linear-gradient(135deg,#86efac,#22c55e)", en:"SOCIAL STUDIES" }, 역사:{ ic:"史", bg:"linear-gradient(135deg,#fdba74,#ea580c)", en:"HISTORY" } };
 const EXTRA_BG = ["linear-gradient(135deg,#93c5fd,#6366f1)","linear-gradient(135deg,#fca5a5,#ef4444)","linear-gradient(135deg,#c4b5fd,#a855f7)","linear-gradient(135deg,#67e8f9,#0891b2)"];
@@ -651,7 +651,7 @@ function stepRegion(el){
       const n = regionSchools(r.name).filter((s) => s.active).length;
       return `<button class="pick region ${r.name === S.region && open ? "sel" : ""} ${open ? "" : "locked"}" data-v="${esc(r.name)}" ${stagger(i)}>
         <div class="en">${REGION_EN[r.name] || "CENTER"}</div><div class="nm">${esc(r.name)}</div><div class="ds"><b style="color:var(--text);font-weight:600">${esc(RN(r.name))}</b> · ${esc(REGION_DESC[r.name] || "")}</div>
-        <div class="ft"><span>${open ? `학교 ${n}곳` : "🔒 다른 센터"}</span>${arrow}</div></button>`; }).join("")}</div>
+        <div class="ft"><span>${open ? `설정 학교 ${n}곳` : "🔒 다른 센터"}</span>${arrow}</div></button>`; }).join("")}</div>
     ${S.role === "owner" ? `<p class="muted" style="text-align:center;margin-top:22px">관리자로 접속했습니다 · 모든 센터를 열 수 있습니다</p>` : `<p class="muted" style="text-align:center;margin-top:22px">${esc(RN(S.myRegion))} 비밀번호로 접속했습니다</p>`}`;
   el.onclick = (e) => { const b = e.target.closest(".pick"); if (!b) return;
     if (!canOpen(b.dataset.v)) { showNotice(RN(b.dataset.v), `${RN(b.dataset.v)} 비밀번호가 아닙니다. 지금은 ${RN(S.myRegion)} 비밀번호로 접속해 있어 ${RN(b.dataset.v)}에는 들어갈 수 없습니다. ${RN(b.dataset.v)}를 보려면 로그아웃 후 ${RN(b.dataset.v)} 비밀번호로 다시 들어오세요.`); return; }
