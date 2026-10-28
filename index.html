@@ -160,7 +160,8 @@ label.f{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--mu
 .side{position:sticky;top:61px;height:calc(100vh - 61px);overflow:auto;padding:18px 16px 40px;border-right:1px solid var(--line);background:rgba(8,11,20,.4)}
 .side h4{font-size:11px;letter-spacing:.14em;color:var(--muted);margin:20px 4px 8px;font-weight:700}
 .side .center{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;border-radius:16px;background:linear-gradient(135deg,rgba(139,124,255,.16),rgba(69,212,200,.08));border:1px solid var(--line2)}
-.side .center b{font-size:19px;font-weight:800;letter-spacing:-.02em}
+.side .center b{font-size:19px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;display:block}
+.side .center > div{min-width:0;flex:1}
 .side .chips{display:flex;flex-wrap:wrap;gap:6px}
 .side .chip{padding:7px 12px;border-radius:10px;background:var(--glass);border:1px solid var(--line);font-size:13px;color:var(--sub)}
 .side .chip:hover{border-color:var(--line2)}
@@ -328,7 +329,7 @@ tr.off td input[data-k="name"]{color:var(--muted)}
 .paper .rp-comment p{white-space:pre-wrap;line-height:1.65;font-size:10.5px;margin:0}
 .paper .rp-comment .by{text-align:right;margin-top:8px;font-size:9.5px;color:var(--ink2)}
 .paper .rp-comment .by b{color:var(--ink)}
-.paper .rp-foot{display:flex;justify-content:space-between;margin-top:12px;padding-top:7px;border-top:1px solid var(--hair);font-size:8.5px;color:var(--mute);letter-spacing:.02em}
+.paper .rp-foot{display:flex;justify-content:space-between;gap:16px;white-space:nowrap;margin-top:12px;padding-top:7px;border-top:1px solid var(--hair);font-size:8.5px;color:var(--mute);letter-spacing:.02em}
 .paper .rp-empty{color:var(--mute);padding:40px 0;text-align:center}
 #exportStage{position:fixed;left:-20000px;top:0;pointer-events:none}
 /* ===== 리포트 화면 (사이트 디자인, 좌: 요약·그래프 / 우: 총평·문항) ===== */
@@ -759,6 +760,13 @@ function renderCrumbs(){
   updateAdminBtns();
 }
 let sideSum = {};
+// 사이드바 센터 이름: 한 줄에 들어가도록 글자 크기 자동 조정 (19px → 최소 12px)
+function fitCenterName(){
+  const b = document.querySelector("#side .center b"); if (!b) return;
+  let fs = 19; b.style.fontSize = fs + "px";
+  while (fs > 12 && b.scrollWidth > b.clientWidth) { fs -= 0.5; b.style.fontSize = fs + "px"; }
+}
+window.addEventListener("resize", () => fitCenterName());
 function renderSide(){
   const subs = regionSubjects(S.region, true);
   const act = regionSchools().filter((s) => s.active);
@@ -774,6 +782,7 @@ function renderSide(){
       : `<span class="muted" style="padding:6px 4px">등록된 학교가 없습니다</span>`}
     <h4>학년</h4><div class="chips">${[1,2,3].map((g) => `<button class="chip ${g === S.grade ? "on" : ""}" data-act="grade" data-v="${g}">${g}학년</button>`).join("")}</div>
     <h4>시험</h4><div class="slist" id="sdExams"></div>`;
+  fitCenterName();
   if ($("sdSchool")) $("sdSchool").onchange = (e) => { if (!confirmLeave()) { e.target.value = S.schoolId ?? ""; return; } S.schoolId = Number(e.target.value) || null; if (S.schoolId) S.level = schoolById(S.schoolId).level; afterPickChange(); };
   $("sdYear").onchange = (e) => { if (!confirmLeave()) { e.target.value = S.year; return; } S.year = Number(e.target.value); S.statYear = S.year; afterPickChange(true); };
   renderExamList();
@@ -1173,7 +1182,7 @@ function renderReport(exam, qs){
     ${n ? kpis + `<div class="rp-panels">${panels.map((x) => `<div class="rp-panel">${x}</div>`).join("")}</div><div class="rp-body"><h4 class="rp-sec">문항별 분석</h4><table class="rp-q">${rows}</table></div>`
         : `<p class="rp-empty">이 시험은 아직 입력된 문항이 없습니다.</p>`}
     ${String(exam?.comment || "").trim() ? `<div class="rp-comment"><h4 class="rp-sec">총평</h4><p>${esc(String(exam.comment).trim())}</p>${exam?.author ? `<div class="by">작성 <b>${esc(exam.author)}</b></div>` : ""}</div>` : ""}
-    <div class="rp-foot"><span>학교 내신분석 기록관리 · ${esc(centerName())}</span><span>출력 ${today}</span></div>`;
+    <div class="rp-foot"><span>${esc(centerName())}</span><span>학교 내신분석 기록관리</span></div>`;
 }
 // 리포트를 PNG 이미지로 저장 (블로그용, 밝은 디자인)
 $("btnSaveImg").onclick = () => run($("btnSaveImg"), async () => {
@@ -1252,7 +1261,7 @@ function statsImageHtml(){
       <div class="rp-kpi"><b>${eng ? by("qtype").length : by("unit").length}<em>개</em></b><span>${eng ? "출제 유형 수" : "출제 단원 수"}</span></div>
     </div>
     <div class="rp-panels two">${panels.map((x) => `<div class="rp-panel">${x}</div>`).join("")}</div>
-    <div class="rp-foot"><span>학교 내신분석 기록관리 · ${esc(centerName())}</span><span>출력 ${new Date().toLocaleDateString("ko-KR")}</span></div>`;
+    <div class="rp-foot"><span>${esc(centerName())}</span><span>학교 내신분석 기록관리</span></div>`;
 }
 $("btnStatImg").onclick = () => run($("btnStatImg"), async () => {
   if (!S.lastStats || !S.lastStats.r.total) throw new Error("이 조건에는 저장할 기록이 없습니다.");
