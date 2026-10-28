@@ -544,7 +544,7 @@ function stars(v){
 function currentSchoolYear(){ const d = new Date(); return d.getMonth() < 2 ? d.getFullYear() - 1 : d.getFullYear(); }
 function yearOptions(){
   const ys = new Set([...S.years, currentSchoolYear(), currentSchoolYear() + 1]);
-  for (let y = 2024; y <= currentSchoolYear(); y++) ys.add(y);
+  for (let y = 2025; y <= currentSchoolYear(); y++) ys.add(y);   // 2025학년도부터 (그 전 학년도는 기록이 있을 때만)
   return [...ys].sort((a,b) => a - b);
 }
 const savePick = () => store.set("pick", { region:S.region, year:S.year, subject:S.subject, level:S.level, schoolId:S.schoolId, grade:S.grade });
