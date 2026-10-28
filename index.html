@@ -259,39 +259,74 @@ table.list td input[type=text],table.list td input:not([type]){width:100%}
 .sw b{font-weight:500;min-width:36px}
 tr.off td input[data-k="name"]{color:var(--muted)}
 /* ===== 1장 보고서 (흰 종이) ===== */
-.paper{background:#fff;color:#111;width:210mm;min-height:297mm;margin:0 auto;padding:12mm 11mm;font-size:11px;border-radius:6px;box-shadow:0 30px 80px -30px rgba(0,0,0,.8);font-family:"Pretendard","Malgun Gothic",sans-serif;letter-spacing:0}
-.paper .rh{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #4f46e5;padding-bottom:6px;margin-bottom:8px}
-.paper .rh h2{font-size:19px;font-weight:800}
-.paper .rh .center{font-size:12px;color:#444;font-weight:700}
-.paper .info{display:flex;margin-bottom:8px;border:1px solid #c7c9d1}
-.paper .info div{flex:1;padding:4px 6px;border-right:1px solid #c7c9d1}
-.paper .info div:last-child{border-right:none}
-.paper .info b{color:#4f46e5;margin-right:6px}
-.paper .body{display:grid;grid-template-columns:1fr 50mm;gap:7px}
-.paper table{border-collapse:collapse;width:100%}
-.paper th,.paper td{border:1px solid #c7c9d1;padding:2px 4px;vertical-align:top;line-height:1.35}
-.paper th{background:#eef0ff;font-weight:700;text-align:center}
-.paper td.c{text-align:center;white-space:nowrap}
-.paper .star{color:#d97706;letter-spacing:-1px}
-.paper .side h4{margin:0 0 4px;font-size:12px;color:#4f46e5}
-.paper .side table{margin-bottom:8px}
-.paper .side td.n{text-align:right;width:28px}
-.paper .total{margin-top:8px;font-weight:700;font-size:12px}
-.paper .comment{margin-top:6px;border:1px solid #c7c9d1;padding:6px 8px;white-space:pre-wrap;line-height:1.55}
-.paper .comment h4{margin:0 0 4px;color:#4f46e5}
-.paper .author{text-align:right;margin-top:6px;color:#333}
-.paper .mini{height:150px;position:relative}
+/* ===== 1장 보고서 (A4) ===== */
+.paper{--ink:#141a33;--ink2:#4a5170;--mute:#8a90a6;--hair:#e4e6ee;--soft:#f6f7fb;--ac:#4b3fd6;--ac2:#0f9b8e;
+  background:#fff;color:var(--ink);width:210mm;min-height:297mm;margin:0 auto;padding:14mm 13mm 11mm;font-size:10.5px;line-height:1.45;border-radius:4px;
+  box-shadow:0 40px 90px -40px rgba(0,0,0,.85);font-family:"Pretendard","Malgun Gothic",sans-serif;letter-spacing:-.005em;display:flex;flex-direction:column;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.paper .rp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding-bottom:12px;border-bottom:1.5px solid var(--ink)}
+.paper .rp-eyebrow{font-size:8.5px;font-weight:700;letter-spacing:.22em;color:var(--ac);text-transform:uppercase;margin-bottom:6px}
+.paper .rp-title{font-size:24px;font-weight:800;letter-spacing:-.035em;line-height:1.15}
+.paper .rp-title small{display:block;font-size:14px;font-weight:600;color:var(--ink2);letter-spacing:-.02em;margin-top:3px}
+.paper .rp-brand{text-align:right;flex:none}
+.paper .rp-brand b{display:block;font-size:12.5px;font-weight:800;letter-spacing:-.02em}
+.paper .rp-brand span{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:999px;background:var(--ink);color:#fff;font-size:9.5px;font-weight:700;letter-spacing:.02em}
+.paper .rp-meta{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--hair);margin-bottom:12px}
+.paper .rp-meta div{padding:8px 0 8px 10px;border-left:1px solid var(--hair)}
+.paper .rp-meta div:first-child{border-left:none;padding-left:0}
+.paper .rp-meta i{display:block;font-style:normal;font-size:8px;letter-spacing:.14em;color:var(--mute);font-weight:700;margin-bottom:2px}
+.paper .rp-meta b{font-size:11.5px;font-weight:700}
+.paper .rp-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.paper .rp-kpi{background:var(--soft);border-radius:8px;padding:9px 11px}
+.paper .rp-kpi b{display:block;font-size:20px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.paper .rp-kpi b em{font-style:normal;font-size:11px;font-weight:700;color:var(--ink2);margin-left:2px}
+.paper .rp-kpi span{font-size:9px;color:var(--ink2)}
+.paper .rp-kpi.dark{background:var(--ink);color:#fff}.paper .rp-kpi.dark span,.paper .rp-kpi.dark b em{color:rgba(255,255,255,.7)}
+.paper .rp-body{display:grid;grid-template-columns:1fr 52mm;gap:14px;flex:1}
+.paper .rp-sec{font-size:9px;font-weight:800;letter-spacing:.16em;color:var(--ink);margin:0 0 6px;display:flex;align-items:center;gap:6px}
+.paper .rp-sec::before{content:"";width:3px;height:10px;border-radius:2px;background:var(--ac)}
+.paper table.rp-q{width:100%;border-collapse:collapse}
+.paper .rp-q th{font-size:8.5px;font-weight:700;color:var(--mute);letter-spacing:.08em;text-align:left;padding:0 6px 5px;border-bottom:1px solid var(--ink)}
+.paper .rp-q td.nw{white-space:nowrap}
+.paper .rp-q td{padding:3.5px 6px;border-bottom:1px solid var(--hair);vertical-align:top}
+.paper .rp-q tr:nth-child(even) td{background:#fafbfd}
+.paper .rp-q td.no{font-weight:800;color:var(--ink);width:22px;text-align:center;font-variant-numeric:tabular-nums}
+.paper .rp-q th.no{text-align:center}
+.paper .rp-q td.u{color:var(--ink2);font-size:9.5px}
+.paper .rp-q .note{display:block;color:var(--mute);font-size:9px;margin-top:1px}
+.paper .pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:9px;font-weight:700;white-space:nowrap;line-height:1.5}
+.paper .pill.f{background:#eef0f6;color:var(--ink2)}
+.paper .pill.t{background:transparent;color:var(--mute);padding-left:2px;font-weight:600}
+.paper .d0{background:#1d1650;color:#fff}.paper .d1{background:#4b3fd6;color:#fff}.paper .d2{background:#dcd9fb;color:#2c2380}.paper .d3{background:#eef0f6;color:#4a5170}.paper .d4{background:#f5f6f9;color:#8a90a6}
+.paper .rp-side{display:flex;flex-direction:column;gap:14px}
+.paper .bars div{display:grid;grid-template-columns:1fr auto;gap:2px 8px;margin-bottom:6px;font-size:9.5px}
+.paper .bars div span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.paper .bars div b{font-variant-numeric:tabular-nums;font-weight:800}
+.paper .bars div i{grid-column:1/-1;height:4px;border-radius:4px;background:var(--soft);overflow:hidden;display:block}
+.paper .bars div i em{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--ac),#7b6ff0)}
+.paper .stack{display:flex;height:10px;border-radius:6px;overflow:hidden;margin-bottom:7px}
+.paper .stack i{display:block;height:100%}
+.paper .legend{display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;font-size:9.5px}
+.paper .legend span{display:flex;align-items:center;gap:5px}.paper .legend span i{width:8px;height:8px;border-radius:2px;flex:none}
+.paper .legend span b{margin-left:auto;font-variant-numeric:tabular-nums}
+.paper .rp-comment{margin-top:14px;padding:12px 14px 12px 16px;background:var(--soft);border-radius:10px;position:relative}
+.paper .rp-comment::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:linear-gradient(var(--ac),var(--ac2))}
+.paper .rp-comment p{white-space:pre-wrap;line-height:1.65;font-size:10.5px;margin:0}
+.paper .rp-comment .by{text-align:right;margin-top:8px;font-size:9.5px;color:var(--ink2)}
+.paper .rp-comment .by b{color:var(--ink)}
+.paper .rp-foot{display:flex;justify-content:space-between;margin-top:12px;padding-top:7px;border-top:1px solid var(--hair);font-size:8.5px;color:var(--mute);letter-spacing:.02em}
+.paper .rp-empty{color:var(--mute);padding:40px 0;text-align:center}
 @media (max-width:1100px){.g5{grid-template-columns:repeat(3,minmax(0,1fr))}.charts{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-grid{grid-template-columns:1fr}.steps .st span{display:none}}
 @media (max-width:720px){
   .wtop{padding:16px}.stage{padding:6px 16px 40px}.steps{display:none}
   .g5,.g3{grid-template-columns:repeat(2,minmax(0,1fr))}.pick .nm{font-size:24px}.grade .nm{font-size:40px}
   header.top{padding:12px 16px}main{padding:16px}
   .charts{grid-template-columns:1fr}.exam-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(2,1fr)}
-  .paper{width:100%;min-height:0;padding:12px}.paper .body{grid-template-columns:1fr}
+  .paper{width:100%;min-height:0;padding:16px}.paper .rp-body{grid-template-columns:1fr}.paper .rp-kpis{grid-template-columns:repeat(2,1fr)}.paper .rp-meta{grid-template-columns:repeat(3,1fr)}
 }
 @media print{
   @page{size:A4;margin:0}
-  body{background:#fff}
+  html,body{background:#fff;min-height:0!important;height:auto!important}
   body::before,body::after{display:none}
   body > *:not(#printArea){display:none!important}
   #printArea{display:block!important}
@@ -913,44 +948,67 @@ function renderReport(exam, qs){
   const sc = schoolById(S.schoolId);
   const paper = $("reportPaper");
   if (reportChart) { reportChart.destroy(); reportChart = null; }
-  const title = `${sc?.name || ""} ${S.grade}학년 ${S.sem}학기 ${S.term}고사 분석`;
   const eng = subjLayout(S.subject) === "english", dkey = eng && S.level === "고" ? "variant" : "difficulty";
-  let rows = "";
+  const cleanUnit = (u) => String(u || "").replace(/^\[[^\]]+\]\s*/, "").replace(/\s*\((15|22)개정\)$/, "");
+  const curTxt = !eng ? `${curOf(S.year, S.grade) === "22개정" ? "2022" : "2015"} 개정 교육과정` : "";
+  // 난이도 색: 선택 목록 순서(특상→하 등)대로 진하게→연하게
+  const dOrder = codesOf(dkey);
+  const dIdx = (v) => { const k = { "특":0, "상":1, "중":3, "하":4, "유":1, "무":3 }[String(v || "").trim()[0]]; if (k !== undefined) return k; const i = dOrder.indexOf(v); const n = Math.max(dOrder.length, 1); return i < 0 ? 4 : Math.min(4, Math.round(i * 4 / Math.max(n - 1, 1))); };
+  const dPill = (v) => v ? `<span class="pill d${dIdx(v)}">${esc(v)}</span>` : "";
+  const DCOL = ["#1d1650", "#4b3fd6", "#a59cf5", "#cfd3e3", "#e6e8ef"];
+  const diffEntries = countBy(qs, dkey).sort((a, b) => dIdx(a[0]) - dIdx(b[0]));
+  const n = qs.length;
+  const pct = (k) => n ? Math.round(k * 100 / n) : 0;
+  // 표
+  let rows;
   if (!eng) {
-    rows = `<thead><tr><th style="width:34px">번호</th><th style="width:52px">난이도</th><th style="width:98px">문제 형태</th><th>세부 내용</th><th style="width:108px">단원</th></tr></thead><tbody>` +
-      qs.map((q) => `<tr><td class="c">${esc(q.no)}</td><td class="c star">${stars(q.difficulty)}</td><td class="c">${esc(q.form)}${q.qtype ? `(${esc(q.qtype)})` : ""}</td><td>${esc(q.content)}${q.note ? `<br><span style="color:#666">${esc(q.note)}</span>` : ""}</td><td>${esc(q.unit)}</td></tr>`).join("");
+    rows = `<thead><tr><th class="no">No.</th><th style="width:44px">난이도</th><th style="width:118px">형태 · 유형</th><th>세부 내용</th><th style="width:96px">단원</th></tr></thead><tbody>` +
+      qs.map((q) => `<tr><td class="no">${esc(q.no)}</td><td>${dPill(q.difficulty)}</td><td class="nw">${q.form ? `<span class="pill f">${esc(q.form)}</span>` : ""}${q.qtype ? `<span class="pill t">${esc(q.qtype)}</span>` : ""}</td><td>${esc(q.content)}${q.note && q.note.trim() !== String(q.content || "").trim() ? `<span class="note">${esc(q.note)}</span>` : ""}</td><td class="u">${esc(cleanUnit(q.unit))}</td></tr>`).join("");
   } else {
-    rows = `<thead><tr><th style="width:34px">번호</th><th style="width:50px">형태</th><th style="width:70px">출처</th><th style="width:78px">유형</th><th style="width:80px">${FIELD[dkey].label}</th><th>비고</th></tr></thead><tbody>` +
-      qs.map((q) => `<tr><td class="c">${esc(q.no)}</td><td class="c">${esc(q.form)}</td><td class="c">${esc(q.source)}</td><td class="c">${esc(q.qtype)}</td><td class="c">${esc(q[dkey])}</td><td>${esc(q.note || q.content)}</td></tr>`).join("");
+    rows = `<thead><tr><th class="no">No.</th><th style="width:46px">형태</th><th style="width:64px">출처</th><th style="width:74px">유형</th><th style="width:72px">${FIELD[dkey].label}</th><th>비고</th></tr></thead><tbody>` +
+      qs.map((q) => `<tr><td class="no">${esc(q.no)}</td><td>${q.form ? `<span class="pill f">${esc(q.form)}</span>` : ""}</td><td class="u">${esc(q.source)}</td><td>${esc(q.qtype)}</td><td>${dPill(q[dkey])}</td><td>${esc(q.note || q.content)}</td></tr>`).join("");
   }
   rows += "</tbody>";
-  const sideTable = (label, entries) => `<h4>${label}</h4><table>${entries.map(([k,n]) => `<tr><td>${esc(k)}</td><td class="n">${n}</td></tr>`).join("") || `<tr><td>-</td></tr>`}</table>`;
-  let side = "";
-  const diffEntries = orderBy(countBy(qs, dkey), dkey);
-  if (!eng) {
-    side += sideTable("단원 구성", countBy(qs, "unit").sort((a,b) => b[1] - a[1]));
-    side += sideTable("난이도", diffEntries);
-  } else {
-    side += sideTable("유형", countBy(qs, "qtype").sort((a,b) => b[1] - a[1]));
-    side += sideTable("출처", countBy(qs, "source").sort((a,b) => b[1] - a[1]));
-    side += sideTable(FIELD[dkey].label, diffEntries);
-  }
-  side += `<h4>${FIELD[dkey].label}별 문항 수</h4><div class="mini"><canvas id="rpChart"></canvas></div>`;
+  // 오른쪽: 막대 + 난이도 분포
+  const bars = (label, entries) => {
+    const max = Math.max(1, ...entries.map((e) => e[1]));
+    return `<div><h4 class="rp-sec">${label}</h4><div class="bars">${entries.map(([k, c]) => `<div><span>${esc(eng ? k : cleanUnit(k))}</span><b>${c}</b><i><em style="width:${Math.round(c * 100 / max)}%"></em></i></div>`).join("") || "-"}</div></div>`;
+  };
+  const dist = `<div><h4 class="rp-sec">${FIELD[dkey].label} 분포</h4>
+    <div class="stack">${diffEntries.map(([k, c]) => `<i style="width:${c * 100 / Math.max(n, 1)}%;background:${DCOL[dIdx(k)]}"></i>`).join("")}</div>
+    <div class="legend">${diffEntries.map(([k, c]) => `<span><i style="background:${DCOL[dIdx(k)]}"></i>${esc(k)}<b>${c}</b></span>`).join("")}</div></div>`;
+  let side = dist;
+  if (!eng) side += bars("단원 구성", countBy(qs, "unit").sort((a, b) => b[1] - a[1]));
+  else side += bars("유형", countBy(qs, "qtype").sort((a, b) => b[1] - a[1])) + bars("출처", countBy(qs, "source").sort((a, b) => b[1] - a[1]));
+  // 요약 수치
+  const forms = countBy(qs, "form").filter(([k]) => k !== "(미입력)");
+  const formTxt = forms.map(([k, c]) => `${k} ${c}`).join(" · ") || "-";
+  const isVar = dkey === "variant";
+  const hard = isVar ? qs.filter((q) => String(q.variant || "").startsWith("유")).length : dOrder.length ? qs.filter((q) => q[dkey] && dIdx(q[dkey]) <= 1).length : 0;
+  const unitsN = new Set(qs.map((q) => q.unit).filter(Boolean)).size;
+  const kpis = `<div class="rp-kpis">
+    <div class="rp-kpi dark"><b>${n}<em>문항</em></b><span>총 문항 수</span></div>
+    <div class="rp-kpi"><b style="font-size:13px;line-height:1.5">${esc(formTxt)}</b><span>문항 형태</span></div>
+    <div class="rp-kpi"><b>${pct(hard)}<em>%</em></b><span>${isVar ? "변형 문항 비율" : "상위 난이도 비율"} (${hard}문항)</span></div>
+    <div class="rp-kpi"><b>${eng ? new Set(qs.map((q) => q.qtype).filter(Boolean)).size : unitsN}<em>개</em></b><span>${eng ? "출제 유형 수" : "출제 단원 수"}</span></div></div>`;
+  const today = new Date().toLocaleDateString("ko-KR");
   paper.innerHTML = `
-    <div class="rh"><h2>${esc(title)}</h2><span class="center">${esc(centerName())}</span></div>
-    <div class="info"><div><b>학교</b>${esc(sc?.name)}</div><div><b>학기</b>${semText(S.year, S.sem)}</div><div><b>구분</b>${esc(S.term)}</div><div><b>학년</b>${S.grade}</div><div><b>과목</b>${esc(S.subject)}</div></div>
-    ${qs.length ? `<div class="body"><div><table>${rows}</table></div><div class="side">${side}</div></div>` : `<p style="color:#666;padding:30px 0;text-align:center">이 시험은 아직 입력된 문항이 없습니다.</p>`}
-    <div class="total">총 문항수 ${qs.length}</div>
-    <div class="comment"><h4>[ 문항 분석 총평 ]</h4>${esc(exam?.comment || "")}</div>
-    <div class="author">코멘트 작성자: ${esc(exam?.author || "")}</div>`;
-  if (qs.length && window.Chart) {
-    reportChart = new Chart($("rpChart"), {
-      type:"bar", data:{ labels:diffEntries.map((e) => e[0]), datasets:[{ data:diffEntries.map((e) => e[1]), backgroundColor:"#6d63e8", borderRadius:4 }] },
-      options:{ responsive:true, maintainAspectRatio:false, animation:false, layout:{ padding:{ top:16 } }, plugins:{ legend:{display:false}, datalabels:{ anchor:"end", align:"top", color:"#111", font:{weight:"bold"} } },
-        scales:{ y:{ beginAtZero:true, grace:"10%", ticks:{ precision:0, color:"#333" }, grid:{color:"#e5e7eb"} }, x:{ ticks:{color:"#333"}, grid:{display:false} } } },
-      plugins: window.ChartDataLabels ? [ChartDataLabels] : []
-    });
-  }
+    <div class="rp-head">
+      <div><div class="rp-eyebrow">Exam Analysis Report · ${S.year}학년도</div>
+        <div class="rp-title">${esc(sc?.name || "")} ${S.grade}학년<small>${S.sem}학기 ${esc(S.term)}고사 분석</small></div></div>
+      <div class="rp-brand"><b>${esc(centerName())}</b><span>${esc(S.subject)}</span></div>
+    </div>
+    <div class="rp-meta">
+      <div><i>SCHOOL</i><b>${esc(sc?.name || "")}</b></div>
+      <div><i>TERM</i><b>${semText(S.year, S.sem)} ${esc(S.term)}</b></div>
+      <div><i>GRADE</i><b>${S.level || ""} ${S.grade}학년</b></div>
+      <div><i>SUBJECT</i><b>${esc(S.subject)}</b></div>
+      ${curTxt ? `<div><i>CURRICULUM</i><b>${esc(curTxt)}</b></div>` : `<div><i>WRITER</i><b>${esc(exam?.author || "-")}</b></div>`}
+    </div>
+    ${n ? kpis + `<div class="rp-body"><div><h4 class="rp-sec">문항별 분석</h4><table class="rp-q">${rows}</table></div><div class="rp-side">${side}</div></div>`
+        : `<p class="rp-empty">이 시험은 아직 입력된 문항이 없습니다.</p>`}
+    <div class="rp-comment"><h4 class="rp-sec">총평</h4><p>${esc(exam?.comment || "총평이 아직 없습니다.")}</p>${exam?.author ? `<div class="by">작성 <b>${esc(exam.author)}</b></div>` : ""}</div>
+    <div class="rp-foot"><span>학교 내신분석 기록관리 · ${esc(centerName())}</span><span>출력 ${today}</span></div>`;
 }
 // 인쇄할 때 A4 한 장에 들어가도록 자동 축소
 function fitPaper(){
@@ -960,11 +1018,11 @@ function fitPaper(){
   const cv = src.querySelector("canvas"), ccv = clone.querySelector("canvas");
   if (cv && ccv) { const img = document.createElement("img"); img.src = cv.toDataURL("image/png"); img.style.cssText = "width:100%;height:100%;object-fit:contain"; ccv.replaceWith(img); }
   area.innerHTML = ""; area.appendChild(clone);
-  const a4 = 297 * 96 / 25.4 - 6;
+  const a4 = 297 * 96 / 25.4 - 28;   // 여유를 두어 꼬리말이 2쪽으로 넘어가지 않게
   area.style.cssText = "display:block;position:absolute;left:-10000px;top:0";
   const h = clone.scrollHeight;
   area.style.cssText = "display:none";
-  if (h > a4) clone.style.zoom = String(Math.max(0.45, a4 / h));
+  if (h > a4) clone.style.zoom = String(Math.max(0.45, (a4 / h) * 0.95));
 }
 window.addEventListener("beforeprint", fitPaper);
 window.addEventListener("afterprint", () => { $("printArea").innerHTML = ""; });
