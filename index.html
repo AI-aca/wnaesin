@@ -1010,7 +1010,7 @@ function renderReport(exam, qs){
   let rows;
   if (!eng) {
     rows = `<thead><tr><th class="no">No.</th><th style="width:44px">난이도</th><th style="width:118px">형태 · 유형</th><th>세부 내용</th><th style="width:150px">단원</th></tr></thead><tbody>` +
-      qs.map((q) => `<tr><td class="no">${esc(q.no)}</td><td>${dPill(q.difficulty)}</td><td class="nw">${q.form ? `<span class="pill f">${esc(q.form)}</span>` : ""}${q.qtype ? `<span class="pill t">${esc(q.qtype)}</span>` : ""}</td><td>${esc(q.content)}${q.note && q.note.trim() !== String(q.content || "").trim() ? `<span class="note">${esc(q.note)}</span>` : ""}</td><td class="u">${esc(cleanUnit(q.unit))}</td></tr>`).join("");
+      qs.map((q) => `<tr><td class="no">${esc(q.no)}</td><td>${dPill(q.difficulty)}</td><td class="nw">${q.form ? `<span class="pill f">${esc(q.form)}</span>` : ""}${q.qtype ? `<span class="pill t">${esc(q.qtype)}</span>` : ""}</td><td>${esc(q.content)}</td><td class="u">${esc(cleanUnit(q.unit))}</td></tr>`).join("");
   } else {
     rows = `<thead><tr><th class="no">No.</th><th style="width:46px">형태</th><th style="width:64px">출처</th><th style="width:74px">유형</th><th style="width:72px">${FIELD[dkey].label}</th><th>비고</th></tr></thead><tbody>` +
       qs.map((q) => `<tr><td class="no">${esc(q.no)}</td><td>${q.form ? `<span class="pill f">${esc(q.form)}</span>` : ""}</td><td class="u">${esc(q.source)}</td><td>${esc(q.qtype)}</td><td>${dPill(q[dkey])}</td><td>${esc(q.note || q.content)}</td></tr>`).join("");
