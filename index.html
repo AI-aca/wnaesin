@@ -400,12 +400,12 @@ tr.off td input[data-k="name"]{color:var(--muted)}
 .rs-qwrap .rs-q{min-width:620px}
 @media (max-width:1250px){.rs-grid{grid-template-columns:1fr}.rs-left{position:static}}
 
-.guide{max-width:640px;margin:40px auto;padding:34px 36px;border-radius:22px;background:var(--glass2);border:1px solid var(--line2);text-align:center;box-shadow:0 30px 80px -40px rgba(0,0,0,.9)}
+.guide{max-width:760px;margin:40px auto;padding:34px 36px;border-radius:22px;background:var(--glass2);border:1px solid var(--line2);text-align:center;box-shadow:0 30px 80px -40px rgba(0,0,0,.9)}
 .guide .gi{width:56px;height:56px;margin:0 auto 14px;border-radius:16px;background:var(--grad);color:#0a0d18;display:grid;place-items:center;font-size:28px;font-weight:800;animation:nudge 1.6s var(--ease) infinite}
 @keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(-8px)}}
 .guide h3{font-size:22px;margin:0 0 8px;letter-spacing:-.03em}.guide h3 b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
 .guide p{color:var(--sub);font-size:14.5px;margin:0 0 20px}
-.guide ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.guide ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 .guide li{padding:12px 8px;border-radius:14px;background:var(--glass);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px}
 .guide li span{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;background:var(--glass3);color:var(--sub)}
 .guide li b{font-size:14px}.guide li em{font-style:normal;font-size:12px;color:var(--muted)}
@@ -836,11 +836,11 @@ function guideHtml(){
   const sc = schoolById(S.schoolId);
   if (!S.subject) return `<div class="guide"><div class="gi">!</div><h3>이 센터에 사용 중인 과목이 없습니다</h3><p>관리 화면에서 과목을 추가해 주세요.</p></div>`;
   if (!regionSchools().some((x) => x.active)) return `<div class="guide"><div class="gi">!</div><h3>이 센터에 등록된 학교가 없습니다</h3><p>관리 화면에서 학교를 추가해 주세요.</p></div>`;
-  const steps = [["학년도", `${S.year}학년도`, true], ["학교", sc ? sc.name : "", !!sc], ["학년", `${S.grade}학년`, true], ["시험", S.sem ? `${S.sem}학기 ${S.term}` : "", !!S.sem]];
+  const steps = [["과목", S.subject || "", !!S.subject], ["학년도", `${S.year}학년도`, true], ["학교", sc ? sc.name : "", !!sc], ["학년", `${S.grade}학년`, true], ["시험", S.sem ? `${S.sem}학기 ${S.term}` : "", !!S.sem]];
   const next = steps.find((x) => !x[2]);
   return `<div class="guide"><div class="gi">←</div>
-    <h3>왼쪽 사이드바에서 <b>${next ? next[0] : "시험"}</b>${next && next[0] === "시험" ? "을" : "를"} 선택하세요</h3>
-    <p>학년도 → 학교 → 학년 → 시험(학기·중간/기말) 순서로 고르면 내용이 나타납니다.</p>
+    <h3>왼쪽 사이드바에서 <b>${next ? next[0] : "시험"}</b>${next && ["시험","과목"].includes(next[0]) ? "을" : "를"} 선택하세요</h3>
+    <p>과목 → 학년도 → 학교 → 학년 → 시험(학기·중간/기말) 순서로 고르면 내용이 나타납니다.</p>
     <ol>${steps.map(([k, v, ok], i) => `<li class="${ok ? "ok" : next && next[0] === k ? "now" : ""}"><span>${ok ? "✓" : i + 1}</span><b>${k}</b><em>${ok ? esc(v) : "선택 필요"}</em></li>`).join("")}</ol></div>`;
 }
 function showExamArea(){
@@ -864,7 +864,7 @@ async function refreshTab(){
 }
 async function enterMain(){
   S.exam = null; S.rows = []; S.dirty = false; S.statYear = S.year;
-  if (S.tab === "admin" && S.role !== "owner") S.tab = "input";
+  S.tab = "input";   // 센터에 들어오면 항상 '문항 입력' 화면부터
   renderCrumbs(); show("vMain"); renderSide(); loadSideSummary();
   await loadExams();
   switchTab(S.tab, true);
