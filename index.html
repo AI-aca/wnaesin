@@ -1085,7 +1085,7 @@ async function loadStats(){
     S.charts.push(makeChart($("sc" + i), t, data, r.total));
   });
 }
-// 통계 → 밝은 '출제 경향' 이미지 한 장
+// 통계 → 밝은 '출제 통계' 이미지 한 장
 function statsImageHtml(){
   const { r, args } = S.lastStats;
   const eng = subjLayout(S.subject) === "english", dkey = eng && args.level === "고" ? "variant" : "difficulty";
@@ -1104,9 +1104,9 @@ function statsImageHtml(){
     rpDonut("유형", by("qtype").sort((a, b) => b[1] - a[1]), rpPal)];
   return `
     <div class="rp-head">
-      <div><div class="rp-title">${esc(who)} ${esc(scope)} ${esc(S.subject)} 출제 경향 <small>(${args.year}학년도)</small></div>
+      <div><div class="rp-title">${esc(who)} ${esc(scope)} ${esc(S.subject)} 출제 통계 <small>(${args.year}학년도)</small></div>
         <div class="rp-tags"><span class="on">${esc(S.subject)}</span><span>시험 ${r.exams}회분 분석</span></div></div>
-      <div class="rp-brand"><b>${esc(centerName())}</b><i>Exam Trend Report</i></div>
+      <div class="rp-brand"><b>${esc(centerName())}</b><i>Exam Statistics Report</i></div>
     </div>
     <div class="rp-kpis">
       <div class="rp-kpi dark"><b>${r.exams}<em>회</em></b><span>분석한 시험 수</span></div>
@@ -1120,7 +1120,7 @@ function statsImageHtml(){
 $("btnStatImg").onclick = () => run($("btnStatImg"), async () => {
   if (!S.lastStats || !S.lastStats.r.total) throw new Error("이 조건에는 저장할 기록이 없습니다.");
   const a = S.lastStats.args, sc = a.school_id ? schoolById(Number(a.school_id)) : null;
-  await savePaperImage(statsImageHtml(), `${a.year}학년도_${sc ? sc.name : RN() + "_전체"}_${a.grade ? a.grade + "학년" : "전학년"}${a.semester ? "_" + a.semester + "학기" : ""}${a.term ? "_" + a.term : ""}_${S.subject}_출제경향.png`);
+  await savePaperImage(statsImageHtml(), `${a.year}학년도_${sc ? sc.name : RN() + "_전체"}_${a.grade ? a.grade + "학년" : "전학년"}${a.semester ? "_" + a.semester + "학기" : ""}${a.term ? "_" + a.term : ""}_${S.subject}_출제통계.png`);
   toast("이미지를 저장했습니다.");
 });
 function makeChart(canvas, type, data, total){
