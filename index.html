@@ -1092,7 +1092,10 @@ function drawImgBg(){ document.querySelectorAll(".imgbg button").forEach((b) => 
 document.querySelectorAll(".imgbg").forEach((g) => g.addEventListener("click", (e) => { const b = e.target.closest("button[data-v]"); if (!b) return; imgTheme = b.dataset.v; store.set("imgTheme", imgTheme); drawImgBg(); }));
 drawImgBg();
 // 리포트 → A4 PDF (길면 여러 장, 표 줄 중간에서 끊기지 않게)
+// 파일 이름 끝에 배경 구분 붙이기 (…_흰배경.png / …_검은배경.pdf)
+const bgName = (filename) => filename.replace(/(\.[a-z]+)$/i, `_${imgTheme === "dark" ? "검은배경" : "흰배경"}$1`);
 async function savePaperPdf(html, filename){
+  filename = bgName(filename);
   if (!window.htmlToImage) await loadScript("https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js");
   if (!window.jspdf) await loadScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js");
   let stage = $("exportStage"); if (!stage) { stage = document.createElement("div"); stage.id = "exportStage"; document.body.appendChild(stage); }
@@ -1134,6 +1137,7 @@ async function savePaperPdf(html, filename){
   } finally { stage.innerHTML = ""; }
 }
 async function savePaperImage(html, filename){
+  filename = bgName(filename);
   if (!window.htmlToImage) await loadScript("https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js");
   let stage = $("exportStage"); if (!stage) { stage = document.createElement("div"); stage.id = "exportStage"; document.body.appendChild(stage); }
   stage.innerHTML = `<div class="paper ${imgTheme === "dark" ? "xdark" : "light"}">${html}</div>`;
