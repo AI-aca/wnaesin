@@ -332,7 +332,9 @@ tr.off td input[data-k="name"]{color:var(--muted)}
 .paper .rp-body{flex:1}
 .paper .rp-sec{font-size:9px;font-weight:800;letter-spacing:.16em;color:var(--ink);margin:0 0 6px;display:flex;align-items:center;gap:6px}
 .paper .rp-sec::before{content:"";width:3px;height:10px;border-radius:2px;background:var(--ac)}
-.paper table.rp-q{width:100%;border-collapse:collapse}
+.paper table.rp-q{width:100%;border-collapse:collapse;table-layout:fixed}
+.paper .rp-q td{overflow:hidden}
+.paper .pill.g{background:transparent;border:1px solid color-mix(in srgb, var(--mute) 50%, transparent);color:var(--ink2);font-weight:600}
 .paper .rp-q th{font-size:8.5px;font-weight:700;color:var(--mute);letter-spacing:.08em;text-align:left;padding:0 6px 5px;border-bottom:1px solid var(--rule)}
 .paper .rp-q td.nw{white-space:nowrap}
 .paper .rp-q td{padding:3.5px 6px;border-bottom:1px solid var(--hair);vertical-align:top}
@@ -1445,13 +1447,20 @@ function renderReport(exam, qs){
   const n = qs.length;
   const pct = (k) => n ? Math.round(k * 100 / n) : 0;
   // 표
+  // 열 너비: 실제 들어간 값의 글자 길이로 계산 (과목마다 첫 행 구성이 달라도 맞게)
+  const txtW = (v, fs) => [...String(v || "")].reduce((a, c) => a + (/[\u3131-\uD79D]/.test(c) ? 1 : /[\s()·\/.,]/.test(c) ? 0.42 : 0.62), 0) * fs;
+  const colW = (f, label, fs, extra, min, max) => Math.round(Math.min(max, Math.max(min, txtW(label, fs * 0.9) + extra, ...qs.map((q) => q[f] ? txtW(q[f], fs) + extra : 0))));
+  const dP = (q) => dPill(q[dkey]);
+  const fP = (q) => q.form ? `<span class="pill f">${esc(q.form)}</span>` : "";
   let rows;
   if (!eng) {
-    rows = `<thead><tr><th class="no">No.</th><th style="width:44px">난이도</th><th style="width:118px">형태 · 유형</th><th>세부 내용</th><th style="width:150px">단원</th></tr></thead><tbody>` +
-      qs.map((q) => `<tr><td class="no">${esc(q.no)}</td><td>${dPill(q.difficulty)}</td><td class="nw">${q.form ? `<span class="pill f">${esc(q.form)}</span>` : ""}${q.qtype ? `<span class="pill t">${esc(q.qtype)}</span>` : ""}</td><td>${esc(q.content)}</td><td class="u">${esc(cleanUnit(q.unit))}</td></tr>`).join("");
+    rows = `<colgroup><col style="width:30px"><col style="width:${colW(dkey, "난이도", 9, 30, 40, 110)}px"><col style="width:${colW("form", "형태", 9, 30, 40, 100)}px"><col style="width:${colW("qtype", "유형", 9, 30, 44, 120)}px"><col><col style="width:150px"></colgroup>
+      <thead><tr><th class="no">No.</th><th>난이도</th><th>형태</th><th>유형</th><th>세부 내용</th><th>단원</th></tr></thead><tbody>` +
+      qs.map((q) => `<tr><td class="no">${esc(q.no)}</td><td class="nw">${dP(q)}</td><td class="nw">${fP(q)}</td><td class="nw">${q.qtype ? `<span class="pill g">${esc(q.qtype)}</span>` : ""}</td><td>${esc(q.content)}</td><td class="u">${esc(cleanUnit(q.unit))}</td></tr>`).join("");
   } else {
-    rows = `<thead><tr><th class="no">No.</th><th style="width:46px">형태</th><th style="width:64px">출처</th><th style="width:74px">유형</th><th style="width:72px">${FIELD[dkey].label}</th><th>비고</th></tr></thead><tbody>` +
-      qs.map((q) => `<tr><td class="no">${esc(q.no)}</td><td>${q.form ? `<span class="pill f">${esc(q.form)}</span>` : ""}</td><td class="u">${esc(q.source)}</td><td>${esc(q.qtype)}</td><td>${dPill(q[dkey])}</td><td>${esc(q.note || q.content)}</td></tr>`).join("");
+    rows = `<colgroup><col style="width:30px"><col style="width:${colW(dkey, FIELD[dkey].label, 9, 30, 40, 130)}px"><col style="width:${colW("form", "형태", 9, 30, 40, 100)}px"><col style="width:${colW("source", "출처", 9.5, 14, 36, 130)}px"><col style="width:${colW("qtype", "유형", 9.5, 14, 36, 140)}px"><col></colgroup>
+      <thead><tr><th class="no">No.</th><th>${FIELD[dkey].label}</th><th>형태</th><th>출처</th><th>유형</th><th>비고</th></tr></thead><tbody>` +
+      qs.map((q) => `<tr><td class="no">${esc(q.no)}</td><td class="nw">${dP(q)}</td><td class="nw">${fP(q)}</td><td class="nw u">${esc(q.source)}</td><td class="nw">${esc(q.qtype)}</td><td>${esc(q.note || q.content)}</td></tr>`).join("");
   }
   rows += "</tbody>";
   // 오른쪽: 막대 + 난이도 분포
@@ -1480,11 +1489,11 @@ function renderReport(exam, qs){
   const kv = (cls, big, unit, label) => `<div class="rs-kpi ${cls}"><b>${big}${unit ? `<em>${unit}</em>` : ""}</b><span>${label}</span></div>`;
   let srows;
   if (!eng) {
-    srows = `<colgroup><col style="width:52px"><col style="width:70px"><col style="width:96px"><col style="width:118px"><col style="width:200px"><col></colgroup><thead><tr><th class="no">번호</th><th>난이도</th><th>형태</th><th>유형</th><th>단원</th><th>세부 내용</th></tr></thead><tbody>` +
-      qs.map((q) => `<tr><td class="no">${esc(q.no)}</td><td class="nw">${dPill(q.difficulty)}</td><td class="nw">${q.form ? `<span class="pill f">${esc(q.form)}</span>` : ""}</td><td class="nw">${q.qtype ? `<span class="pill g">${esc(q.qtype)}</span>` : ""}</td><td class="u">${esc(cleanUnit(q.unit))}</td><td class="c">${q.content ? esc(q.content) : `<span class="empty-c">-</span>`}</td></tr>`).join("") + "</tbody>";
+    srows = `<colgroup><col style="width:52px"><col style="width:${colW(dkey, "난이도", 12.5, 46, 64, 190)}px"><col style="width:${colW("form", "형태", 12.5, 46, 64, 160)}px"><col style="width:${colW("qtype", "유형", 12.5, 46, 70, 190)}px"><col style="width:200px"><col></colgroup><thead><tr><th class="no">번호</th><th>난이도</th><th>형태</th><th>유형</th><th>단원</th><th>세부 내용</th></tr></thead><tbody>` +
+      qs.map((q) => `<tr><td class="no">${esc(q.no)}</td><td class="nw">${dP(q)}</td><td class="nw">${fP(q)}</td><td class="nw">${q.qtype ? `<span class="pill g">${esc(q.qtype)}</span>` : ""}</td><td class="u">${esc(cleanUnit(q.unit))}</td><td class="c">${q.content ? esc(q.content) : `<span class="empty-c">-</span>`}</td></tr>`).join("") + "</tbody>";
   } else {
-    srows = `<colgroup><col style="width:52px"><col style="width:84px"><col style="width:84px"><col style="width:100px"><col style="width:120px"><col></colgroup><thead><tr><th class="no">번호</th><th>${FIELD[dkey].label}</th><th>형태</th><th>출처</th><th>유형</th><th>비고</th></tr></thead><tbody>` +
-      qs.map((q) => `<tr><td class="no">${esc(q.no)}</td><td class="nw">${dPill(q[dkey])}</td><td class="nw">${q.form ? `<span class="pill f">${esc(q.form)}</span>` : ""}</td><td class="nw s">${esc(q.source)}</td><td class="nw">${esc(q.qtype)}</td><td class="c">${(q.note || q.content) ? esc(q.note || q.content) : `<span class="empty-c">-</span>`}</td></tr>`).join("") + "</tbody>";
+    srows = `<colgroup><col style="width:52px"><col style="width:${colW(dkey, FIELD[dkey].label, 12.5, 46, 64, 200)}px"><col style="width:${colW("form", "형태", 12.5, 46, 64, 160)}px"><col style="width:${colW("source", "출처", 13.5, 26, 56, 180)}px"><col style="width:${colW("qtype", "유형", 13.5, 26, 60, 200)}px"><col></colgroup><thead><tr><th class="no">번호</th><th>${FIELD[dkey].label}</th><th>형태</th><th>출처</th><th>유형</th><th>비고</th></tr></thead><tbody>` +
+      qs.map((q) => `<tr><td class="no">${esc(q.no)}</td><td class="nw">${dP(q)}</td><td class="nw">${fP(q)}</td><td class="nw s">${esc(q.source)}</td><td class="nw">${esc(q.qtype)}</td><td class="c">${(q.note || q.content) ? esc(q.note || q.content) : `<span class="empty-c">-</span>`}</td></tr>`).join("") + "</tbody>";
   }
   paper.innerHTML = `<div class="rs">
     <div class="rs-head">
