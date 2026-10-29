@@ -488,7 +488,7 @@ button.pdfbtn:hover{filter:brightness(1.08);transform:translateY(-1px)}.imgbg bu
 <div id="ntModal" class="modal hidden">
   <div class="mbox">
     <h3 id="ntTitle"></h3>
-    <p class="muted" id="ntMsg" style="margin:6px 0 0;line-height:1.6"></p>
+    <p class="muted" id="ntMsg" style="margin:6px 0 0;line-height:1.6;white-space:pre-line"></p>
     <div class="row" style="margin-top:18px;justify-content:flex-end"><button class="primary" id="ntOk">확인</button></div>
   </div>
 </div>
@@ -759,7 +759,12 @@ $("btnLogin").onclick = () => run($("btnLogin"), async () => {
   const r = await api("login", { password:$("loginPw").value });
   S.token = r.token; store.set("token", { token:r.token, at:Date.now() });
   $("loginPw").value = ""; await afterLogin();
+  // 어떤 비밀번호로 들어왔는지 확인 창
+  if (S.role === "owner") showNotice("로그인 완료", "관리자로 로그인되었습니다.\n모든 센터를 열고 관리할 수 있습니다.");
+  else showNotice("로그인 완료", `${RN(S.myRegion)}${josaRo(RN(S.myRegion))} 로그인되었습니다.\n${RN(S.myRegion)} 자료만 보고 입력할 수 있습니다.`);
 });
+// 받침에 맞춰 '로/으로' (ㄹ 받침·받침 없음 → 로)
+function josaRo(w){ const c = String(w).trim().slice(-1).charCodeAt(0) - 0xAC00; if (c < 0 || c > 11171) return "(으)로"; const j = c % 28; return j === 0 || j === 8 ? "로" : "으로"; }
 $("loginPw").addEventListener("keydown", (e) => { if (e.key === "Enter") $("btnLogin").click(); });
 function logoutLocal(){ S.token = null; store.del("token"); startLogin(); }
 async function logout(){ if (!confirmLeave()) return; S.dirty = false; try { await api("logout"); } catch {} logoutLocal(); }
@@ -783,7 +788,7 @@ async function afterLogin(){
 // ===== 센터 선택 (첫 화면) =====
 const stagger = (i) => `style="animation-delay:${80 + i * 60}ms"`;
 const arrow = `<span class="arrow">→</span>`;
-function showNotice(title, msg){ $("ntTitle").textContent = title; $("ntMsg").textContent = msg; $("ntModal").classList.remove("hidden"); }
+function showNotice(title, msg){ $("ntTitle").textContent = title; $("ntMsg").textContent = msg; $("ntModal").classList.remove("hidden"); setTimeout(() => $("ntOk").focus(), 30); }
 $("ntOk").onclick = () => $("ntModal").classList.add("hidden");
 function goPick(){
   show("vPick");
