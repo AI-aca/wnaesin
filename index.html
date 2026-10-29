@@ -761,7 +761,7 @@ $("btnLogin").onclick = () => run($("btnLogin"), async () => {
   $("loginPw").value = ""; await afterLogin();
   // 어떤 비밀번호로 들어왔는지 확인 창
   if (S.role === "owner") showNotice("로그인 완료", "관리자로 로그인되었습니다.\n모든 센터를 열고 관리할 수 있습니다.");
-  else showNotice("로그인 완료", `${RN(S.myRegion)}${josaRo(RN(S.myRegion))} 로그인되었습니다.\n${RN(S.myRegion)} 자료만 보고 입력할 수 있습니다.`);
+  else showNotice("로그인 완료", `${RN(S.myRegion)}${josaRo(RN(S.myRegion))} 로그인되었습니다.\n${myRegionsText()} 자료${S.myRegions.length > 1 ? "를" : "만"} 보고 입력할 수 있습니다.`);
 });
 // 받침에 맞춰 '로/으로' (ㄹ 받침·받침 없음 → 로)
 function josaRo(w){ const c = String(w).trim().slice(-1).charCodeAt(0) - 0xAC00; if (c < 0 || c > 11171) return "(으)로"; const j = c % 28; return j === 0 || j === 8 ? "로" : "으로"; }
@@ -773,12 +773,13 @@ $("btnLogout1").onclick = logout; $("btnLogout2").onclick = logout;
 async function afterLogin(){
   const r = await api("bootstrap");
   S.role = r.role; S.myRegion = r.region || null;
+  S.myRegions = (r.access && r.access.length ? r.access : [S.myRegion]).filter(Boolean);   // 이 비밀번호로 열 수 있는 센터
   S.regions = r.regions; S.schools = r.schools; S.codes = r.codes; S.years = r.years;
   // 서버가 아직 과목 기능 전 버전이면 기본 3과목으로 표시
   S.subjects = r.subjects || S.regions.flatMap((g) => [["수학","basic",10],["과학","basic",20],["영어","english",30]].map(([name, layout, sort]) => ({ region:g.name, name, layout, sort, active:true })));
   const last = store.get("pick");
   if (last && S.regions.some((x) => x.name === last.region)) Object.assign(S, last);
-  if (S.role !== "owner" && S.myRegion && S.region !== S.myRegion) { S.region = S.myRegion; S.schoolId = null; S.sem = null; S.term = null; }
+  if (S.role !== "owner" && S.myRegion && !S.myRegions.includes(S.region)) { S.region = S.myRegion; S.schoolId = null; S.sem = null; S.term = null; }
   S.year = currentSchoolYear(); S.statYear = S.year;   // 학년도 기본값 = 올해
   S.subject = null;                                      // 과목은 직접 선택
   S.schoolId = null; S.sem = null; S.term = null;      // 학교 기본값 = 선택하세요
@@ -803,14 +804,15 @@ function stepRegion(el){
       return `<button class="pick region ${r.name === S.region && open ? "sel" : ""} ${open ? "" : "locked"}" data-v="${esc(r.name)}" ${stagger(i)}>
         <div class="en">${REGION_EN[r.name] || "CENTER"}</div><div class="nm">${esc(r.name)}</div><div class="ds"><b style="color:var(--text);font-weight:600">${esc(RN(r.name))}</b> · ${esc(REGION_DESC[r.name] || "")}</div>
         <div class="ft"><span>${open ? `설정 학교 ${n}곳` : "🔒 다른 센터"}</span>${arrow}</div></button>`; }).join("")}</div>
-    ${S.role === "owner" ? `<p class="muted" style="text-align:center;margin-top:22px">관리자로 접속했습니다 · 모든 센터를 열 수 있습니다</p>` : `<p class="muted" style="text-align:center;margin-top:22px">${esc(RN(S.myRegion))} 비밀번호로 접속했습니다</p>`}`;
+    ${S.role === "owner" ? `<p class="muted" style="text-align:center;margin-top:22px">관리자로 접속했습니다 · 모든 센터를 열 수 있습니다</p>` : `<p class="muted" style="text-align:center;margin-top:22px">${esc(RN(S.myRegion))} 비밀번호로 접속했습니다${S.myRegions.length > 1 ? ` · ${esc(myRegionsText())}을(를) 열 수 있습니다` : ""}</p>`}`;
   el.onclick = (e) => { const b = e.target.closest(".pick"); if (!b) return;
     if (!canOpen(b.dataset.v)) { showNotice(RN(b.dataset.v), `${RN(b.dataset.v)} 비밀번호가 아닙니다. 지금은 ${RN(S.myRegion)} 비밀번호로 접속해 있어 ${RN(b.dataset.v)}에는 들어갈 수 없습니다. ${RN(b.dataset.v)}를 보려면 로그아웃 후 ${RN(b.dataset.v)} 비밀번호로 다시 들어오세요.`); return; }
     if (S.region !== b.dataset.v) { S.schoolId = null; S.sem = null; S.term = null; }
     S.subject = null;   // 센터에 들어올 때마다 과목은 선택 안 된 상태
     S.region = b.dataset.v; fixPick(); savePick(); enterMain(); };
 }
-function canOpen(region){ return S.role === "owner" || region === S.myRegion; }
+function canOpen(region){ return S.role === "owner" || (S.myRegions || [S.myRegion]).includes(region); }
+function myRegionsText(){ return (S.myRegions || [S.myRegion]).map((r) => RN(r)).join("·"); }
 // 센터에 맞게 과목·학교·학년 기본값 맞추기
 function fixPick(){
   const subs = regionSubjects(S.region, true);
