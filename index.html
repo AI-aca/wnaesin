@@ -817,6 +817,7 @@ function myRegionsText(){ return (S.myRegions || [S.myRegion]).map((r) => RN(r))
 function fixPick(){
   const subs = regionSubjects(S.region, true);
   if (!subs.includes(S.subject)) S.subject = null;   // 과목은 직접 선택
+  if (subs.length === 1) S.subject = subs[0];         // 활성 과목이 1개뿐이면 자동 선택
   const act = regionSchools().filter((s) => s.active);
   let sc = schoolById(S.schoolId);
   if (!sc || sc.region !== S.region || !sc.active) sc = null;   // 학교는 직접 선택
