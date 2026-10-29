@@ -643,6 +643,7 @@ button.pdfbtn:hover{filter:brightness(1.08);transform:translateY(-1px)}.imgbg bu
 const DEFAULT_API = "https://xphtctpbysbbdyjaxidh.supabase.co/functions/v1/naesin";
 const API = new URLSearchParams(location.search).get("api") || DEFAULT_API;
 const LEVELS = ["중","고"];
+const LVNAME = (l) => ({ 중:"중학교", 고:"고등학교" })[l] || `${l}학교`;
 const REGION_EN = { 송도:"SONGDO", 한강:"HANGANG", 청라:"CHEONGNA", 산본:"SANBON", 세종:"SEJONG", 배곧:"BAEGOT" };
 const REGION_DESC = { 송도:"인천광역시 연수구", 한강:"경기도 김포시", 청라:"인천광역시 서해구", 산본:"경기도 군포시", 세종:"세종특별자치시", 배곧:"경기도 시흥시" };
 const SUBJ_STYLE = { 수학:{ ic:"∑", bg:"linear-gradient(135deg,#a78bfa,#818cf8)", en:"MATHEMATICS" }, 과학:{ ic:"⚛", bg:"linear-gradient(135deg,#5eead4,#38bdf8)", en:"SCIENCE" }, 영어:{ ic:"A", bg:"linear-gradient(135deg,#fcd34d,#f59e0b)", en:"ENGLISH" },
@@ -853,7 +854,7 @@ function renderSide(){
     <div class="center"><div><div class="eyebrow" style="font-size:10px">${REGION_EN[S.region] || "CENTER"}</div><b>${esc(RN())}</b></div><button class="ghost small" data-act="center">센터 변경</button></div>
     <h4>학년도</h4><select id="sdYear" class="on">${yearOptions().map((y) => `<option value="${y}" ${y === S.year ? "selected" : ""}>${y}학년도</option>`).join("")}</select>
     <h4>과목</h4><div class="chips ${S.subject ? "" : "need"}">${subs.map((x) => `<button class="chip ${x === S.subject ? "on" : ""}" data-act="subject" data-v="${esc(x)}">${esc(x)}</button>`).join("") || `<span class="muted">활성 과목이 없습니다</span>`}</div>
-    ${lvls.length > 1 ? `<h4>학교급</h4><div class="chips">${lvls.map((l) => `<button class="chip ${l === S.level ? "on" : ""}" data-act="level" data-v="${l}">${l}학교</button>`).join("")}</div>` : ""}
+    ${lvls.length > 1 ? `<h4>학교급</h4><div class="chips">${lvls.map((l) => `<button class="chip ${l === S.level ? "on" : ""}" data-act="level" data-v="${l}">${LVNAME(l)}</button>`).join("")}</div>` : ""}
     <h4>학교</h4>${sch.length ? `<select id="sdSchool" class="${S.schoolId ? "on" : "unset"}"><option value="" ${S.schoolId ? "" : "selected"}>학교를 선택하세요</option>${sch.map((x) => { const m = sideSum[x.id];
       return `<option value="${x.id}" ${x.id === S.schoolId ? "selected" : ""}>${esc(x.name)}${m ? `  (${S.year}학년도 ${m.exams}건)` : ""}</option>`; }).join("")}</select>`
       : `<span class="muted" style="padding:6px 4px">등록된 학교가 없습니다</span>`}
@@ -1559,7 +1560,7 @@ async function loadStats(){
   let r; try { r = await api("stats", args); } catch(e) { toast(e.message, true); return; }
   if (my !== statSeq) return;
   S.lastStats = { r, args };
-  $("stKpis").innerHTML = `<div class="kpi"><b>${r.exams}</b><span>시험 수</span></div><div class="kpi"><b>${r.total}</b><span>총 문항 수</span></div><div class="kpi"><b class="gradtext">${esc(S.subject)}</b><span>${esc(RN())} · ${S.statYear}학년도 · ${level}학교</span></div>`;
+  $("stKpis").innerHTML = `<div class="kpi"><b>${r.exams}</b><span>시험 수</span></div><div class="kpi"><b>${r.total}</b><span>총 문항 수</span></div><div class="kpi"><b class="gradtext">${esc(S.subject)}</b><span>${esc(RN())} · ${S.statYear}학년도 · ${LVNAME(level)}</span></div>`;
   S.charts.forEach((c) => c.destroy()); S.charts = [];
   const plan = chartPlan(S.subject, level);
   $("stCharts").innerHTML = plan.map(([f, t], i) => `<div class="chart-card" style="animation:rise .5s var(--ease) ${i * 60}ms both"><h3>${KIND_LABEL[f]}${t === "bar" ? "별 문항수" : " 비율"}</h3><div class="cv">${r.total ? `<canvas id="sc${i}"></canvas>` : `<div class="empty">기록이 없습니다</div>`}</div></div>`).join("");
@@ -1578,7 +1579,7 @@ function statsImageHtml(){
   const eng = subjLayout(S.subject) === "english", dkey = eng && args.level === "고" ? "variant" : "difficulty";
   const by = (f) => (r.by[f] || []).map((x) => [x.name, x.n]).filter(([k]) => k !== "(미입력)");
   const sc = args.school_id ? schoolById(Number(args.school_id)) : null;
-  const who = sc ? sc.name : `${RN()} 전체 ${args.level}학교`;
+  const who = sc ? sc.name : `${RN()} 전체 ${LVNAME(args.level)}`;
   const scope = [args.grade ? `${args.grade}학년` : "전 학년", args.semester ? `${args.semester}학기` : "", args.term ? `${args.term}고사` : ""].filter(Boolean).join(" ");
   const dOrder = codesOf(dkey, S.subject, args.level);
   const dEntries = by(dkey).sort((a, b) => diffRank(a[0], dOrder) - diffRank(b[0], dOrder));
