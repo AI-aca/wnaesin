@@ -466,10 +466,10 @@ body.rmode header.top .crumbs{display:none}
 /* 상단: 브랜드·모드 전환·탭이 서로 겹치지 않게 순서대로 배치 (좁으면 탭이 다음 줄로) */
 header.top{flex-wrap:wrap;row-gap:10px}
 header.top .brand{flex:none;white-space:nowrap}
-nav.tabs{position:static;transform:none;margin-left:22px}
+nav.tabs{position:static;transform:none;margin-left:34px}
 /* 모드 전환 버튼과 뒤의 탭 사이 세로 구분선 */
 .modesw{position:relative}
-.modesw::after{content:"";position:absolute;right:-14px;top:4px;bottom:4px;width:2px;border-radius:2px;background:rgba(255,255,255,.22)}
+.modesw::after{content:"";position:absolute;right:-19px;top:-3px;bottom:-3px;width:3px;border-radius:3px;background:rgba(255,255,255,.5)}
 .modesw{display:flex;gap:2px;padding:3px;margin-left:14px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;flex:none}
 .modesw button{border:none;background:transparent;border-radius:9px;padding:8px 18px;font-size:15px;font-weight:700;color:var(--sub);white-space:nowrap;letter-spacing:-.02em}
 .modesw button:not(.on):hover{color:var(--text);background:rgba(255,255,255,.06)}
