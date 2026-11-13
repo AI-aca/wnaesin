@@ -463,9 +463,23 @@ button.pdfbtn:hover{filter:brightness(1.08);transform:translateY(-1px)}.imgbg bu
 /* ===== 학생 성적 ===== */
 @media (max-width:1800px){header.top .crumbs{display:none}}
 body.rmode header.top .crumbs{display:none}
+/* 상단: 브랜드·모드 전환·탭이 서로 겹치지 않게 순서대로 배치 (좁으면 탭이 다음 줄로) */
+header.top{flex-wrap:wrap;row-gap:10px}
+header.top .brand{flex:none;white-space:nowrap}
+nav.tabs{position:static;transform:none;margin-left:22px}
+/* 모드 전환 버튼과 뒤의 탭 사이 세로 구분선 */
+.modesw{position:relative}
+.modesw::after{content:"";position:absolute;right:-14px;top:4px;bottom:4px;width:2px;border-radius:2px;background:rgba(255,255,255,.22)}
 .modesw{display:flex;gap:2px;padding:3px;margin-left:14px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;flex:none}
-.modesw button{border:none;background:transparent;border-radius:9px;padding:6px 12px;font-size:13px;color:var(--sub);white-space:nowrap}
-.modesw button.on{background:linear-gradient(135deg,rgba(139,124,255,.35),rgba(69,212,200,.28));color:var(--text);box-shadow:inset 0 0 0 1px var(--line2);font-weight:600}
+.modesw button{border:none;background:transparent;border-radius:9px;padding:8px 18px;font-size:15px;font-weight:700;color:var(--sub);white-space:nowrap;letter-spacing:-.02em}
+.modesw button:not(.on):hover{color:var(--text);background:rgba(255,255,255,.06)}
+.modesw button[data-m="q"].on{background:linear-gradient(135deg,#8b7cff,#6a5ae0);color:#fff;box-shadow:0 4px 14px -4px rgba(139,124,255,.7)}
+.modesw button[data-m="r"].on{background:linear-gradient(135deg,#45d4c8,#22a59a);color:#06201d;box-shadow:0 4px 14px -4px rgba(69,212,200,.7)}
+/* 모드 구분: 사이드바 맨 위 모드 이름 띠 + 위 테두리 색 */
+.side{border-top:3px solid #8b7cff}
+body.rmode .side{border-top-color:#45d4c8}
+.side::before{content:"문항 분석";display:block;margin:-4px 0 14px;padding:7px 12px;border-radius:10px;font-size:14px;font-weight:800;letter-spacing:-.02em;color:#fff;background:linear-gradient(135deg,rgba(139,124,255,.55),rgba(106,90,224,.35));border:1px solid rgba(139,124,255,.6)}
+body.rmode .side::before{content:"학생 성적";color:#dffbf8;background:linear-gradient(135deg,rgba(69,212,200,.45),rgba(34,165,154,.3));border-color:rgba(69,212,200,.6)}
 .rbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;font-size:13px;color:var(--sub)}
 .rsave{padding:5px 11px;border-radius:9px;border:1px solid var(--line);font-size:12.5px}
 .rsave.ok{color:#5eead4;border-color:rgba(69,212,200,.45)}.rsave.ing{color:#fde68a;border-color:rgba(251,191,36,.45)}.rsave.bad{color:#fecaca;border-color:rgba(248,113,113,.6);background:rgba(248,113,113,.12)}
@@ -2129,9 +2143,15 @@ function setMode(m){
     S.dirty = false;
     for (const id of ["tInput","tReport","tStats","tList","tAdmin"]) $(id).classList.add("hidden");
     $("rWrap").classList.remove("hidden");
+    // 문항 분석에서 고른 학교·학년을 그대로 이어받음 (같은 선택 상태로 보기)
+    const sc = S.schoolId ? schoolById(S.schoolId) : null;
+    if (sc) { R.school = sc.name; R.level = sc.level; R.grade = Number(S.grade) || 0; }
     if (!rBy()) askBy();
     rSwitch(R.tab, true);
   } else {
+    // 학생 성적에서 고른 학교·학년을 문항 분석으로 이어받음
+    if (R.school) { const sc = regionSchools().find((x) => x.name === R.school && x.active); if (sc && sc.id !== S.schoolId) { S.schoolId = sc.id; S.level = sc.level; S.sem = null; S.term = null; } }
+    if (R.grade) S.grade = R.grade;
     $("rWrap").classList.add("hidden"); $("rAc").classList.add("hidden");
     renderSide(); switchTab(S.tab === "admin" ? "input" : S.tab, true);
   }
@@ -2191,10 +2211,10 @@ function renderSideR(){
     <div class="center"><div><div class="eyebrow" style="font-size:10px">${REGION_EN[S.region] || "CENTER"}</div><b>${esc(RN())}</b></div><button class="ghost small" data-act="center">센터 변경</button></div>
     <h4>학년도</h4><select id="rsYear" class="on">${yearOptions().map((y) => `<option value="${y}" ${y === S.year ? "selected" : ""}>${y}학년도</option>`).join("")}</select>
     <h4>과목</h4><div class="chips ${S.subject ? "" : "need"}">${subs.map((x) => `<button class="chip ${x === S.subject ? "on" : ""}" data-ract="subject" data-v="${esc(x)}">${esc(x)}</button>`).join("")}</div>
-    <h4>시험</h4><div class="slist">${S.subject ? EXAMS4.map(([s, t]) => { const n = cnt(s, t); return `<button class="sitem ${R.sem === s && R.term === t ? "on" : ""}" data-ract="exam" data-s="${s}" data-t="${t}"><span><i class="${n ? "has" : ""}"></i>${s}학기 ${t}</span><small>${n ? n + "명" : "기록 없음"}</small></button>`; }).join("") : `<span class="muted">과목을 먼저 선택하세요</span>`}</div>
     ${lvls.length > 1 ? `<h4>학교급</h4><div class="chips"><button class="chip ${!R.level ? "on" : ""}" data-ract="level" data-v="">전체</button>${lvls.map((l) => `<button class="chip ${l === R.level ? "on" : ""}" data-ract="level" data-v="${l}">${LVNAME(l)}</button>`).join("")}</div>` : ""}
-    <h4>학교</h4><select id="rsSchool" class="${R.school ? "on" : ""}"><option value="">센터 전체</option>${sch.map((x) => `<option value="${esc(x.name)}" ${x.name === R.school ? "selected" : ""}>${esc(x.name)}${x.site ? "" : " (목록에 없음)"}</option>`).join("")}</select>
+    <h4>학교</h4><select id="rsSchool" class="${R.school ? "on" : ""}"><option value="">전체 학교 (모두 보기)</option>${sch.map((x) => `<option value="${esc(x.name)}" ${x.name === R.school ? "selected" : ""}>${esc(x.name)}${x.site ? "" : " (목록에 없음)"}</option>`).join("")}</select>
     <h4>학년</h4><div class="chips"><button class="chip ${!R.grade ? "on" : ""}" data-ract="grade" data-v="0">전체</button>${[1,2,3].map((g) => `<button class="chip ${g === R.grade ? "on" : ""}" data-ract="grade" data-v="${g}">${g}학년</button>`).join("")}</div>
+    <h4>시험</h4><div class="slist">${S.subject ? EXAMS4.map(([s, t]) => { const n = cnt(s, t); return `<button class="sitem ${R.sem === s && R.term === t ? "on" : ""}" data-ract="exam" data-s="${s}" data-t="${t}"><span><i class="${n ? "has" : ""}"></i>${s}학기 ${t}</span><small>${n ? n + "명" : "기록 없음"}</small></button>`; }).join("") : `<span class="muted">과목을 먼저 선택하세요</span>`}</div>
     <p class="muted" style="font-size:12px;margin-top:14px;line-height:1.6">학생 성적은 칸을 벗어나면 바로 저장됩니다. 학교·학년을 고르면 표가 그 학교·학년만 보여 줍니다.</p>`;
   fitCenterName();
   $("rsYear").onchange = async (e) => { if (!rLeaveOk()) { e.target.value = S.year; return; } S.year = Number(e.target.value); S.statYear = S.year; savePick(); R.yearKey = ""; await rAfterPick(); };
@@ -2234,7 +2254,7 @@ async function rSwitch(t, force=false){
   await rLoadYear(); renderSideR();
   await rRefresh(true);
 }
-const rNeed = (what) => `<div class="guide"><div class="gi">←</div><h3>왼쪽 사이드바에서 <span class="gradtext">${what}</span>을(를) 선택하세요</h3><p>학년도 → 과목 → 시험(학기·중간/기말) → 학교 → 학년 순서로 고르면 내용이 나타납니다.</p></div>`;
+const rNeed = (what) => `<div class="guide"><div class="gi">←</div><h3>왼쪽 사이드바에서 <span class="gradtext">${what}</span>을(를) 선택하세요</h3><p>학년도 → 과목 → 학교급 → 학교 → 학년 → 시험 순서로 고르면 내용이 나타납니다. (학교·학년은 '전체'로 두어도 됩니다)</p></div>`;
 
 // ---------- 성적 입력 ----------
 async function rLoadExam(){
