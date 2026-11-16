@@ -476,8 +476,6 @@ nav.tabs{position:static;transform:none;margin-left:34px}
 .modesw button[data-m="q"].on{background:linear-gradient(135deg,#8b7cff,#6a5ae0);color:#fff;box-shadow:0 4px 14px -4px rgba(139,124,255,.7)}
 .modesw button[data-m="r"].on{background:linear-gradient(135deg,#45d4c8,#22a59a);color:#06201d;box-shadow:0 4px 14px -4px rgba(69,212,200,.7)}
 /* 모드 구분: 사이드바 맨 위 모드 이름 띠 + 위 테두리 색 */
-.side{border-top:3px solid #8b7cff}
-body.rmode .side{border-top-color:#45d4c8}
 .side::before{content:"문항 분석";display:block;margin:-4px 0 14px;padding:7px 12px;border-radius:10px;font-size:14px;font-weight:800;letter-spacing:-.02em;color:#fff;background:linear-gradient(135deg,rgba(139,124,255,.55),rgba(106,90,224,.35));border:1px solid rgba(139,124,255,.6)}
 .modeTitle{margin:0 0 18px;padding:10px 16px;border-radius:12px;border-left:5px solid #8b7cff;background:linear-gradient(90deg,rgba(139,124,255,.18),rgba(139,124,255,0) 70%);font-size:19px;font-weight:800;letter-spacing:-.02em;color:#e6e1ff}
 .modeTitle::before{content:"학교별 문항분석 입력"}
@@ -823,7 +821,7 @@ const PALETTE = ["#8b7cff","#45d4c8","#e6c27a","#f472b6","#60a5fa","#a3e635","#f
 
 // ===== 상태 =====
 const S = { token:null, regions:[], schools:[], codes:[], subjects:[], years:[],
-  region:null, year:null, subject:null, level:"중", schoolId:null, grade:null,
+  region:null, year:null, subject:null, level:"", schoolId:null, grade:null,
   step:0, tab:"input", sem:null, term:null, exam:null, rows:[], dirty:false, examList:[], statYear:null, charts:[] };
 // ===== 저장하지 않은 변경 알림 =====
 // 문항 입력 화면(S.dirty)과 관리 화면(AD: 바뀐 항목 이름)에서 고친 뒤 저장하지 않은 것을 계속 표시하고, 이동 전에 확인
@@ -956,7 +954,8 @@ function stepRegion(el){
     if (!canOpen(b.dataset.v)) { showNotice(RN(b.dataset.v), `${RN(b.dataset.v)} 비밀번호가 아닙니다. 지금은 ${RN(S.myRegion)} 비밀번호로 접속해 있어 ${RN(b.dataset.v)}에는 들어갈 수 없습니다. ${RN(b.dataset.v)}를 보려면 로그아웃 후 ${RN(b.dataset.v)} 비밀번호로 다시 들어오세요.`); return; }
     if (S.region !== b.dataset.v) { S.schoolId = null; S.sem = null; S.term = null; }
     S.subject = null;   // 센터에 들어올 때마다 과목은 선택 안 된 상태
-    S.region = b.dataset.v; fixPick(); savePick(); enterMain(); };
+    S.region = b.dataset.v; S.level = ""; fixPick();   // 학교급은 직접 선택 (저장된 학교가 있거나 학교급이 하나뿐이면 자동)
+    savePick(); enterMain(); };
 }
 function canOpen(region){ return S.role === "owner" || (S.myRegions || [S.myRegion]).includes(region); }
 function myRegionsText(){ return (S.myRegions || [S.myRegion]).map((r) => RN(r)).join("·"); }
@@ -970,7 +969,7 @@ function fixPick(){
   if (!sc || sc.region !== S.region || !sc.active) sc = null;   // 학교는 직접 선택
   S.schoolId = sc ? sc.id : null;
   const lvls = LEVELS.filter((l) => act.some((s) => s.level === l));
-  if (sc) S.level = sc.level; else if (!lvls.includes(S.level)) S.level = lvls[0] || "중";
+  if (sc) S.level = sc.level; else if (!lvls.includes(S.level)) S.level = lvls.length === 1 ? lvls[0] : "";
   if (![1,2,3].includes(Number(S.grade))) S.grade = 1;
   if (!S.year) S.year = currentSchoolYear();
 }
@@ -1000,9 +999,9 @@ function renderSide(){
     <div class="center"><div><div class="eyebrow" style="font-size:10px">${REGION_EN[S.region] || "CENTER"}</div><b>${esc(RN())}</b></div><button class="ghost small" data-act="center">센터 변경</button></div>
     <h4>학년도</h4><select id="sdYear" class="on">${yearOptions().map((y) => `<option value="${y}" ${y === S.year ? "selected" : ""}>${y}학년도</option>`).join("")}</select>
     <h4>과목</h4><div class="chips ${S.subject ? "" : "need"}">${subs.map((x) => `<button class="chip ${x === S.subject ? "on" : ""}" data-act="subject" data-v="${esc(x)}">${esc(x)}</button>`).join("") || `<span class="muted">활성 과목이 없습니다</span>`}</div>
-    ${lvls.length > 1 ? `<h4>학교급</h4><div class="chips">${lvls.map((l) => `<button class="chip ${l === S.level ? "on" : ""}" data-act="level" data-v="${l}">${LVNAME(l)}</button>`).join("")}</div>` : ""}
-    <h4>학교</h4>${sch.length ? `<select id="sdSchool" class="${S.schoolId ? "on" : "unset"}"><option value="" ${S.schoolId ? "" : "selected"}>학교를 선택하세요</option>${sch.map((x) => { const m = sideSum[x.id];
-      return `<option value="${x.id}" ${x.id === S.schoolId ? "selected" : ""}>${esc(x.name)}${m ? `  (${S.year}학년도 ${m.exams}건)` : ""}</option>`; }).join("")}</select>`
+    ${lvls.length > 1 ? `<h4>학교급</h4><div class="chips ${S.subject && !S.level ? "need" : ""}">${lvls.map((l) => `<button class="chip ${l === S.level ? "on" : ""}" data-act="level" data-v="${l}">${LVNAME(l)}</button>`).join("")}</div>` : ""}
+    <h4>학교</h4>${!S.subject || !S.level ? `<select disabled><option>${S.subject ? "학교급을 먼저 고르세요" : "과목을 먼저 고르세요"}</option></select>` : sch.length ? `<select id="sdSchool" class="${S.schoolId ? "on" : "unset"}"><option value="" ${S.schoolId ? "" : "selected"}>학교를 선택하세요</option>${sch.map((x) => { const m = sideSum[x.id];
+      return `<option value="${x.id}" ${x.id === S.schoolId ? "selected" : ""}>${esc(x.name)}${m ? ` · ${m.exams}건` : ""}</option>`; }).join("")}</select>`
       : `<span class="muted" style="padding:6px 4px">등록된 학교가 없습니다</span>`}
     <h4>학년</h4><div class="chips">${[1,2,3].map((g) => `<button class="chip ${g === S.grade ? "on" : ""}" data-act="grade" data-v="${g}">${g}학년</button>`).join("")}</div>
     <h4>시험</h4><div class="slist" id="sdExams"></div>`;
@@ -1043,7 +1042,7 @@ async function loadExams(){
 }
 function renderExamList(){
   const el = $("sdExams"); if (!el) return;
-  if (!S.subject || !S.schoolId) { el.innerHTML = `<span class="muted" style="padding:6px 4px;font-size:13px">${!S.subject ? "과목을 먼저 선택하세요" : "학교를 먼저 선택하세요"}</span>`; return; }
+  if (!S.subject || !S.schoolId) { el.innerHTML = `<span class="muted" style="padding:6px 4px;font-size:13px">${!S.subject ? "과목을 먼저 선택하세요" : !S.level ? "학교급을 먼저 선택하세요" : "학교를 먼저 선택하세요"}</span>`; return; }
   el.innerHTML = EXAMS4.map(([s, t]) => {
     const ex = (S.examList || []).find((x) => x.semester === s && x.term === t);
     const on = S.sem === s && S.term === t ? "on" : "";
@@ -1060,12 +1059,12 @@ function guideHtml(){
   const sc = schoolById(S.schoolId);
   if (!regionSubjects(S.region, true).length) return `<div class="guide"><div class="gi">!</div><h3>이 센터에 사용 중인 과목이 없습니다</h3><p>관리 화면에서 과목을 추가해 주세요.</p></div>`;
   if (!regionSchools().some((x) => x.active)) return `<div class="guide"><div class="gi">!</div><h3>이 센터에 등록된 학교가 없습니다</h3><p>관리 화면에서 학교를 추가해 주세요.</p></div>`;
-  const steps = [["학년도", `${S.year}학년도`, true], ["과목", S.subject || "", !!S.subject], ["학교", sc ? sc.name : "", !!sc], ["학년", `${S.grade}학년`, true], ["시험", S.sem ? `${S.sem}학기 ${S.term}` : "", !!S.sem]];
+  const steps = [["학년도", `${S.year}학년도`, true], ["과목", S.subject || "", !!S.subject], ["학교급", S.level ? LVNAME(S.level) : "", !!S.level], ["학교", sc ? sc.name : "", !!sc], ["학년", `${S.grade}학년`, true], ["시험", S.sem ? `${S.sem}학기 ${S.term}` : "", !!S.sem]];
   const next = steps.find((x) => !x[2]);
   return `<div class="guide"><div class="gi">←</div>
-    <h3>왼쪽 사이드바에서 <b>${next ? next[0] : "시험"}</b>${next && ["시험","과목"].includes(next[0]) ? "을" : "를"} 선택하세요</h3>
-    <p>학년도 → 과목 → 학교 → 학년 → 시험(학기·중간/기말) 순서로 고르면 내용이 나타납니다.</p>
-    <ol>${steps.map(([k, v, ok], i) => `<li class="${ok ? "ok" : next && next[0] === k ? "now" : ""}"><span>${ok ? "✓" : i + 1}</span><b>${k}</b><em>${ok ? esc(v) : "선택 필요"}</em></li>`).join("")}</ol></div>`;
+    <h3>왼쪽 사이드바에서 <b>${next ? next[0] : "시험"}</b>${next && ["시험","과목","학교급"].includes(next[0]) ? "을" : "를"} 선택하세요</h3>
+    <p>학년도 → 과목 → 학교급 → 학교 → 학년 → 시험(학기·중간/기말) 순서로 고르면 내용이 나타납니다.</p>
+    <ol style="grid-template-columns:repeat(${steps.length},1fr)">${steps.map(([k, v, ok], i) => `<li class="${ok ? "ok" : next && next[0] === k ? "now" : ""}"><span>${ok ? "✓" : i + 1}</span><b>${k}</b><em>${ok ? esc(v) : "선택 필요"}</em></li>`).join("")}</ol></div>`;
 }
 function showExamArea(){
   if (S.tab === "input") {
@@ -1967,7 +1966,7 @@ $("adSchools").addEventListener("input", (e) => {
   s[k] = k === "active" ? e.target.checked : k === "sort" ? Number(e.target.value) : e.target.value;
   if (k === "active") { tr.classList.toggle("off", !s.active); tr.querySelector(".sw b").textContent = s.active ? "활성" : "비활성"; }
 });
-$("btnSchoolAdd").onclick = () => { markAd("학교 목록"); adSchoolsDraft.push({ name:"", level:S.level, sort:500, active:true }); drawSchools(); };
+$("btnSchoolAdd").onclick = () => { markAd("학교 목록"); adSchoolsDraft.push({ name:"", level:S.level || "중", sort:500, active:true }); drawSchools(); };
 $("btnSchoolSave").onclick = () => run($("btnSchoolSave"), async () => {
   const dels = adSchoolsDraft.filter((s) => s._del);
   if (dels.length && !confirm(`${dels.map((s) => s.name).join(", ")} 학교를 삭제할까요? (기록이 없는 학교만 삭제됩니다)`)) return;
@@ -2166,6 +2165,7 @@ function setMode(m){
   } else {
     // 학생 성적에서 고른 학교·학년을 문항 분석으로 이어받음
     if (R.school) { const sc = regionSchools().find((x) => x.name === R.school && x.active); if (sc && sc.id !== S.schoolId) { S.schoolId = sc.id; S.level = sc.level; S.sem = null; S.term = null; } }
+    if (!R.school && R.level && !S.schoolId) S.level = R.level;
     if (R.grade) S.grade = R.grade;
     $("rWrap").classList.add("hidden"); $("rAc").classList.add("hidden");
     renderSide(); switchTab(S.tab === "admin" ? "input" : S.tab, true);
@@ -2233,7 +2233,7 @@ function renderSideR(){
     ${lvls.length > 1 ? `<h4>학교급</h4><div class="chips ${S.subject && !R.level ? "need" : ""}">${lvls.map((l) => `<button class="chip ${l === R.level ? "on" : ""}" data-ract="level" data-v="${l}">${LVNAME(l)}</button>`).join("")}</div>` : ""}
     <h4>학교</h4>${lv ? `<select id="rsSchool" class="${R.school ? "on" : ""}"><option value="">전체 학교 (모두 보기) · ${lvRows.filter(rValid).length}건</option>${sch.map((x) => `<option value="${esc(x.name)}" ${x.name === R.school ? "selected" : ""}>${esc(x.name)}${x.site ? "" : " (목록에 없음)"} · ${scCnt(x.name)}건</option>`).join("")}</select>` : `<select id="rsSchool" disabled><option>${S.subject ? "학교급을 먼저 고르세요" : "과목을 먼저 고르세요"}</option></select>`}
     <h4>학년</h4><div class="chips"><button class="chip ${!R.grade ? "on" : ""}" data-ract="grade" data-v="0">전체</button>${[1,2,3].map((g) => `<button class="chip ${g === R.grade ? "on" : ""}" data-ract="grade" data-v="${g}">${g}학년</button>`).join("")}</div>
-    <h4>시험</h4><div class="slist">${S.subject ? EXAMS4.map(([s, t]) => { const n = cnt(s, t); return `<button class="sitem ${R.sem === s && R.term === t ? "on" : ""}" data-ract="exam" data-s="${s}" data-t="${t}"><span><i class="${lv && n ? "has" : ""}"></i>${s}학기 ${t}</span><small>${lv ? n + "명" : ""}</small></button>`; }).join("") : `<span class="muted">과목을 먼저 선택하세요</span>`}</div>
+    <h4>시험</h4><div class="slist">${lv ? EXAMS4.map(([s, t]) => { const n = cnt(s, t); return `<button class="sitem ${R.sem === s && R.term === t ? "on" : ""}" data-ract="exam" data-s="${s}" data-t="${t}"><span><i class="${lv && n ? "has" : ""}"></i>${s}학기 ${t}</span><small>${lv ? n + "명" : ""}</small></button>`; }).join("") : `<span class="muted" style="padding:6px 4px;font-size:13px">${!S.subject ? "과목을 먼저 선택하세요" : "학교급을 먼저 선택하세요"}</span>`}</div>
 `;
   fitCenterName();
   $("rsYear").onchange = async (e) => { if (!rLeaveOk()) { e.target.value = S.year; return; } S.year = Number(e.target.value); S.statYear = S.year; savePick(); R.yearKey = ""; await rAfterPick(); };
