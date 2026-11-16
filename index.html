@@ -479,6 +479,11 @@ nav.tabs{position:static;transform:none;margin-left:34px}
 .side{border-top:3px solid #8b7cff}
 body.rmode .side{border-top-color:#45d4c8}
 .side::before{content:"문항 분석";display:block;margin:-4px 0 14px;padding:7px 12px;border-radius:10px;font-size:14px;font-weight:800;letter-spacing:-.02em;color:#fff;background:linear-gradient(135deg,rgba(139,124,255,.55),rgba(106,90,224,.35));border:1px solid rgba(139,124,255,.6)}
+.modeTitle{margin:0 0 18px;padding:10px 16px;border-radius:12px;border-left:5px solid #8b7cff;background:linear-gradient(90deg,rgba(139,124,255,.18),rgba(139,124,255,0) 70%);font-size:19px;font-weight:800;letter-spacing:-.02em;color:#e6e1ff}
+.modeTitle::before{content:"학교별 문항분석 입력"}
+body.rmode .modeTitle{border-left-color:#45d4c8;background:linear-gradient(90deg,rgba(69,212,200,.16),rgba(69,212,200,0) 70%);color:#d9fbf7}
+body.rmode .modeTitle::before{content:"학생별 내신성적 입력"}
+main:has(#tAdmin:not(.hidden)) .modeTitle{display:none}
 body.rmode .side::before{content:"학생 성적";color:#dffbf8;background:linear-gradient(135deg,rgba(69,212,200,.45),rgba(34,165,154,.3));border-color:rgba(69,212,200,.6)}
 .rbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;font-size:13px;color:var(--sub)}
 .rsave{padding:5px 11px;border-radius:9px;border:1px solid var(--line);font-size:12.5px}
@@ -539,12 +544,12 @@ table.rt td a{color:#93c5fd;cursor:pointer;text-decoration:none}
 .hof .ribbon{margin:14px auto 26px;display:flex;align-items:center;justify-content:center;gap:0}
 .hof .ribbon .ln{flex:1;height:2px;background:linear-gradient(90deg,transparent,#4b3fd6)}.hof .ribbon .ln:last-child{background:linear-gradient(90deg,#0f9b8e,transparent)}.hof.dark .ribbon .ln{background:linear-gradient(90deg,transparent,#8b7cff)}.hof.dark .ribbon .ln:last-child{background:linear-gradient(90deg,#45d4c8,transparent)}
 .hof .ribbon .bd{padding:10px 34px;border-radius:999px;background:linear-gradient(135deg,#4b3fd6,#0f9b8e);color:#fff;font-weight:800;font-size:24px;white-space:nowrap}
-.hof .cols{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+.hof .cols{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
 .hof .grp{margin-bottom:26px}
 .hof .gh{background:#1d1650;color:#fff;text-align:center;font-weight:800;font-size:23px;padding:8px 0;margin-bottom:6px}
 .hof.dark .gh{background:rgba(139,124,255,.28);color:#ddd8ff}
-.hof .gr{display:grid;grid-template-columns:1.25fr 1fr 70px;align-items:center;font-size:24px;line-height:1.25;padding:7px 10px;border-bottom:1px solid rgba(128,128,128,.18)}
-.hof .gr span:nth-child(1){text-align:left;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hof .gr span:nth-child(2){text-align:center;font-weight:700}.hof .gr span:nth-child(3){text-align:right;font-weight:800}
+.hof .gr{display:grid;grid-template-columns:1fr 1fr 1fr;column-gap:8px;align-items:center;font-size:24px;line-height:1.25;padding:7px 10px;border-bottom:1px solid rgba(128,128,128,.18)}
+.hof .gr span:nth-child(1){text-align:center;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hof .gr span:nth-child(2){text-align:center;font-weight:700}.hof .gr span:nth-child(3){text-align:center;font-weight:800}
 .hof .foot{margin-top:10px;display:flex;justify-content:space-between;font-size:15px;opacity:.55}
 </style>
 </head>
@@ -653,6 +658,7 @@ table.rt td a{color:#93c5fd;cursor:pointer;text-decoration:none}
   <aside class="side" id="side"></aside>
   <div class="content">
   <main>
+    <div class="modeTitle"></div>
     <!-- 입력 -->
     <div id="tInput" class="panel">
       <div id="inEditor" class="hidden">
@@ -2217,20 +2223,18 @@ function renderSideR(){
   const sch = schools.filter((s) => !R.level || s.level === R.level);
   rAutoLevel();
   const lv = !!(S.subject && R.level);
-  const stuKey = (r) => `${r.school_name}|${r.student_name}|${r.name_no || 0}|${(r.year || S.year) - Number(r.grade)}`;
-  const stuCnt = (rows) => new Set(rows.map(stuKey)).size;
   const lvRows = R.yearRows.filter((r) => r.level === R.level);
-  const scCnt = (name) => stuCnt(lvRows.filter((r) => r.school_name === name));
+  const scCnt = (name) => lvRows.filter((r) => r.school_name === name && rValid(r)).length;
   const cnt = (s, t) => lvRows.filter((r) => r.semester === s && r.term === t && (!R.school || r.school_name === R.school) && (!R.grade || Number(r.grade) === R.grade) && rValid(r)).length;
   $("side").innerHTML = `
     <div class="center"><div><div class="eyebrow" style="font-size:10px">${REGION_EN[S.region] || "CENTER"}</div><b>${esc(RN())}</b></div><button class="ghost small" data-act="center">센터 변경</button></div>
     <h4>학년도</h4><select id="rsYear" class="on">${yearOptions().map((y) => `<option value="${y}" ${y === S.year ? "selected" : ""}>${y}학년도</option>`).join("")}</select>
     <h4>과목</h4><div class="chips ${S.subject ? "" : "need"}">${subs.map((x) => `<button class="chip ${x === S.subject ? "on" : ""}" data-ract="subject" data-v="${esc(x)}">${esc(x)}</button>`).join("")}</div>
     ${lvls.length > 1 ? `<h4>학교급</h4><div class="chips ${S.subject && !R.level ? "need" : ""}">${lvls.map((l) => `<button class="chip ${l === R.level ? "on" : ""}" data-ract="level" data-v="${l}">${LVNAME(l)}</button>`).join("")}</div>` : ""}
-    <h4>학교</h4>${lv ? `<select id="rsSchool" class="${R.school ? "on" : ""}"><option value="">전체 학교 (모두 보기) · ${stuCnt(lvRows)}명</option>${sch.map((x) => `<option value="${esc(x.name)}" ${x.name === R.school ? "selected" : ""}>${esc(x.name)}${x.site ? "" : " (목록에 없음)"} · ${scCnt(x.name)}명</option>`).join("")}</select>` : `<select id="rsSchool" disabled><option>${S.subject ? "학교급을 먼저 고르세요" : "과목을 먼저 고르세요"}</option></select>`}
+    <h4>학교</h4>${lv ? `<select id="rsSchool" class="${R.school ? "on" : ""}"><option value="">전체 학교 (모두 보기) · ${lvRows.filter(rValid).length}건</option>${sch.map((x) => `<option value="${esc(x.name)}" ${x.name === R.school ? "selected" : ""}>${esc(x.name)}${x.site ? "" : " (목록에 없음)"} · ${scCnt(x.name)}건</option>`).join("")}</select>` : `<select id="rsSchool" disabled><option>${S.subject ? "학교급을 먼저 고르세요" : "과목을 먼저 고르세요"}</option></select>`}
     <h4>학년</h4><div class="chips"><button class="chip ${!R.grade ? "on" : ""}" data-ract="grade" data-v="0">전체</button>${[1,2,3].map((g) => `<button class="chip ${g === R.grade ? "on" : ""}" data-ract="grade" data-v="${g}">${g}학년</button>`).join("")}</div>
     <h4>시험</h4><div class="slist">${S.subject ? EXAMS4.map(([s, t]) => { const n = cnt(s, t); return `<button class="sitem ${R.sem === s && R.term === t ? "on" : ""}" data-ract="exam" data-s="${s}" data-t="${t}"><span><i class="${lv && n ? "has" : ""}"></i>${s}학기 ${t}</span><small>${lv ? n + "명" : ""}</small></button>`; }).join("") : `<span class="muted">과목을 먼저 선택하세요</span>`}</div>
-    <p class="muted" style="font-size:12px;margin-top:14px;line-height:1.6">숫자 보는 법<br>· 학교 옆: 그 학년도에 등록된 학생 수<br>· 시험 옆: 고른 학교·학년에서 그 시험 점수가 들어간 학생 수 (통계의 응시 인원과 같음)</p>`;
+`;
   fitCenterName();
   $("rsYear").onchange = async (e) => { if (!rLeaveOk()) { e.target.value = S.year; return; } S.year = Number(e.target.value); S.statYear = S.year; savePick(); R.yearKey = ""; await rAfterPick(); };
   if (lv) $("rsSchool").onchange = (e) => { R.school = e.target.value; if (R.school) R.level = rLevelOf(R.school) === R.level || !R.level ? R.level : ""; rAfterPick(false); };
@@ -2271,7 +2275,16 @@ async function rSwitch(t, force=false){
 }
 function rAutoLevel(){ if (R.level) return; const l = LEVELS.filter((x) => rSchoolsAll().some((sc) => sc.level === x)); if (l.length === 1) R.level = l[0]; }
 const rNeedW = (exam) => { rAutoLevel(); return !S.subject ? "과목" : !R.level ? "학교급" : exam && !R.sem ? "시험" : ""; };
-const rNeed = (what) => `<div class="guide"><div class="gi">←</div><h3>왼쪽 사이드바에서 <span class="gradtext">${what}</span>을(를) 선택하세요</h3><p>학년도 → 과목 → 학교급 → 학교 → 학년 → 시험 순서로 고르면 내용이 나타납니다. (학년도·과목·학교급은 꼭 골라야 하고, 학교·학년은 '전체'로 두어도 됩니다)</p></div>`;
+const rNeed = (what) => {
+  const exam = what === "시험";
+  const steps = [["학년도", `${S.year}학년도`, true], ["과목", S.subject || "", !!S.subject], ["학교급", R.level ? LVNAME(R.level) : "", !!R.level],
+    ["학교", R.school || "전체 학교", true], ["학년", R.grade ? `${R.grade}학년` : "전체", true]];
+  if (exam || R.sem || !["tschool","tstudent"].includes(R.tab)) steps.push(["시험", R.sem ? `${R.sem}학기 ${R.term}` : "", !!R.sem]);
+  return `<div class="guide"><div class="gi">←</div>
+    <h3>왼쪽 사이드바에서 <span class="gradtext">${what}</span>을 선택하세요</h3>
+    <p>학년도 → 과목 → 학교급 → 학교 → 학년${steps.length > 5 ? " → 시험(학기·중간/기말)" : ""} 순서로 고르면 내용이 나타납니다. 학교·학년은 '전체'로 두어도 됩니다.</p>
+    <ol style="grid-template-columns:repeat(${steps.length},1fr)">${steps.map(([k, v, ok], i) => `<li class="${ok ? "ok" : k === what ? "now" : ""}"><span>${ok ? "✓" : i + 1}</span><b>${k}</b><em>${ok ? esc(v) : "선택 필요"}</em></li>`).join("")}</ol></div>`;
+};
 
 // ---------- 성적 입력 ----------
 async function rLoadExam(){
