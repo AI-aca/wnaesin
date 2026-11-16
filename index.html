@@ -485,32 +485,33 @@ main:has(#tAdmin:not(.hidden)) .modeTitle{display:none}
 body.rmode .side::before{content:"학생 성적";color:#dffbf8;background:linear-gradient(135deg,rgba(69,212,200,.45),rgba(34,165,154,.3));border-color:rgba(69,212,200,.6)}
 .rbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;font-size:13px;color:var(--sub)}
 .rsave{padding:5px 11px;border-radius:9px;border:1px solid var(--line);font-size:12.5px}
-.rsave.ok{color:#5eead4;border-color:rgba(69,212,200,.45)}.rsave.ing{color:#fde68a;border-color:rgba(251,191,36,.45)}.rsave.bad{color:#fecaca;border-color:rgba(248,113,113,.6);background:rgba(248,113,113,.12)}
-.rwho{color:#93c5fd}
+.rsave.ok{color:var(--sub);border-color:var(--line2);background:var(--glass)}.rsave.ing{color:#fde68a;border-color:rgba(251,191,36,.45)}.rsave.bad{color:#fecaca;border-color:rgba(248,113,113,.6);background:rgba(248,113,113,.12)}
+.rwho{color:var(--sub)}
 table.rq{border-collapse:collapse;width:100%;min-width:1080px}
-table.rq th{background:#151a28;box-shadow:inset 0 -1px 0 var(--line2);color:var(--muted);font-weight:600;font-size:12px;padding:10px 6px;text-align:center;position:sticky;top:0;z-index:1}
+table.rq th{background:#11141c;color:var(--muted);font-weight:600;font-size:12px;padding:10px 6px;text-align:center;position:sticky;top:0;z-index:1}
 table.rq td{border-top:1px solid var(--line);padding:4px 3px;font-size:13.5px}
 table.rq td input,table.rq td select{width:100%;padding:7px 8px;font-size:13.5px;background:transparent;border-color:transparent;border-radius:8px;color:var(--text)}
 table.rq td input:hover,table.rq td select:hover{border-color:var(--line2)}
 table.rq td input:focus,table.rq td select:focus{background:rgba(0,0,0,.3)}
 table.rq td.idx{color:var(--muted);text-align:center;width:34px;font-size:12px}
 table.rq td.band{text-align:center;font-size:12.5px;white-space:nowrap}
-table.rq tr.new td{background:rgba(139,124,255,.06)}
-table.rq tr.grp td{background:rgba(69,212,200,.10);color:#7fe3da;font-weight:700;font-size:13px;padding:8px 12px;border-top:2px solid rgba(69,212,200,.35)}
+table.rq tr.new td{background:rgba(255,255,255,.03)}
+table.rq tr.grp td{background:rgba(255,255,255,.045);color:var(--text);font-weight:700;font-size:13px;padding:8px 12px;border-top:1px solid var(--line2)}
 table.rq tr.grp td span{color:var(--muted);font-weight:500;margin-left:6px}
 table.rq .rby{display:flex;flex-direction:column;align-items:center;font-size:12.5px;line-height:1.25}
 table.rq .rby small{color:var(--muted);font-size:11px}
 table.rq .rby.old{color:var(--muted);font-size:12px}
-.rscope{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 10px;padding:10px 14px;border-radius:12px;background:rgba(69,212,200,.12);border:1px solid rgba(69,212,200,.45);font-size:14px;color:var(--text)}
-.rscope b{color:#7fe3da}
+.rscope{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 10px;padding:10px 14px;border-radius:12px;background:var(--glass);border:1px solid var(--line);font-size:14px;color:var(--sub)}
+.rscope b{color:var(--text)}
 .rscope.all{background:rgba(255,255,255,.04);border-color:var(--line);color:var(--sub)}
-.rscope .rblank{color:#fbbf24;font-weight:700}
+.rscope .rblank{color:#fcd34d;font-weight:600}
 table.rq td.pend input{box-shadow:inset 0 -2px 0 rgba(251,191,36,.7)}
 table.rq td.fail input{box-shadow:inset 0 -2px 0 rgba(248,113,113,.9)}
 table.rq td.act button{padding:4px 8px;font-size:12px;border-radius:7px;background:transparent;border-color:transparent;color:var(--muted)}
 .rsum{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--sub)}.rsum b{color:var(--text)}
 .bandpill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700}
 .b100{background:rgba(244,114,182,.18);color:#f9a8d4}.b90{background:rgba(139,124,255,.2);color:#c4b5fd}.b80{background:rgba(69,212,200,.15);color:#5eead4}.b70{background:rgba(96,165,250,.15);color:#93c5fd}.b0{background:rgba(148,163,184,.15);color:#cbd5e1}
+table.rq .bandpill{background:rgba(255,255,255,.07);color:var(--sub);font-weight:600}table.rq .bandpill.b100{background:rgba(255,255,255,.12);color:var(--text);font-weight:700}
 #rAc{position:fixed;z-index:120;min-width:260px;max-height:260px;overflow:auto;background:#121828;border:1px solid var(--line2);border-radius:10px;box-shadow:0 20px 40px -15px #000;font-size:13.5px}
 #rAc div{padding:8px 12px;cursor:pointer;color:var(--sub)}#rAc div b{color:var(--text)}#rAc div.on,#rAc div:hover{background:rgba(139,124,255,.18)}
 .rkpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
@@ -548,7 +549,7 @@ table.rt td a{color:#93c5fd;cursor:pointer;text-decoration:none}
 .hof.dark .gh{background:rgba(139,124,255,.28);color:#ddd8ff}
 .hof .gr{display:grid;grid-template-columns:1fr 1fr 1fr;column-gap:8px;align-items:center;font-size:24px;line-height:1.25;padding:7px 10px;border-bottom:1px solid rgba(128,128,128,.18)}
 .hof .gr span:nth-child(1){text-align:center;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hof .gr span:nth-child(2){text-align:center;font-weight:700}.hof .gr span:nth-child(3){text-align:center;font-weight:800}
-.hof .foot{margin-top:10px;display:flex;justify-content:space-between;font-size:15px;opacity:.55}
+.hof .foot{margin-top:10px;display:flex;justify-content:flex-end;font-size:15px;opacity:.55}
 </style>
 </head>
 <body>
@@ -2352,7 +2353,7 @@ function rRenderInput(){
     <div class="ptitle"><h2>${esc(S.subject)} 성적 입력</h2><span class="muted">${rExamName(S.year, R.sem, R.term)} · ${esc(RN())}${R.school ? " · " + esc(R.school) : " · 전체 학교"}${R.grade ? " · " + R.grade + "학년" : ""}</span></div>
     ${rScopeBar(vis)}
     <div class="rbar" id="rBar"></div>
-    <div class="card" style="padding:0;overflow:hidden"><div id="rqWrap" style="overflow:auto;max-height:calc(100vh - 290px)">
+    <div class="qwrap" style="overflow:hidden"><div id="rqWrap" style="overflow:auto;max-height:calc(100vh - 290px)">
       <table class="rq"><colgroup><col style="width:34px">${cols.map(([, , w]) => `<col${w ? ` style="width:${w}px"` : ""}>`).join("")}<col style="width:44px"></colgroup>
       <thead><tr><th>#</th>${cols.map(([, l]) => `<th>${l}</th>`).join("")}<th></th></tr></thead>
       <tbody>${rGroupRows(vis, cols.length + 2, (r, i) => `<tr data-lk="${r.lk}" class="${r.id ? "" : "new"}"><td class="idx">${i + 1}</td>${cols.map(([k]) => `<td class="${k === "band" ? "band" : ""} ${r.st[k] || ""}">${rCell(r, k)}</td>`).join("")}<td class="act"><button data-a="del" title="이 줄 삭제">✕</button></td></tr>`)}</tbody></table>
@@ -2390,7 +2391,7 @@ function rGroupRows(vis, span, rowFn){
 function rDrawBar(){
   const el = $("rBar"); if (!el) return;
   const st = R.failed ? `<span class="rsave bad">⚠ 저장 실패 ${R.failed}칸 · 인터넷 연결을 확인하세요 (자동으로 다시 시도)</span>` : R.pending ? `<span class="rsave ing">저장 중…</span>` : `<span class="rsave ok">✓ 자동 저장됨</span>`;
-  el.innerHTML = `${st}<span>지금 입력하는 사람 <b>${esc(rBy() || "미정")}</b> <a href="#" id="rByEdit" style="color:#93c5fd;font-size:12px">바꾸기</a></span>${R.others.length ? `<span class="rwho">함께 보는 중 · ${R.others.map(esc).join(", ")}</span>` : ""}<span class="spacer"></span><span class="muted">칸을 벗어나면 바로 저장됩니다 · Enter: 아래 칸</span>`;
+  el.innerHTML = `${st}<span>지금 입력하는 사람 <b>${esc(rBy() || "미정")}</b> <a href="#" id="rByEdit" style="color:var(--sub);font-size:12px">바꾸기</a></span>${R.others.length ? `<span class="rwho">함께 보는 중 · ${R.others.map(esc).join(", ")}</span>` : ""}<span class="spacer"></span><span class="muted">칸을 벗어나면 바로 저장됩니다 · Enter: 아래 칸</span>`;
   $("rByEdit").onclick = (e) => { e.preventDefault(); askBy(); };
 }
 function rFocus(lk, k){ const el = document.querySelector(`table.rq tr[data-lk="${lk}"] [data-k="${k}"]`); if (el) { el.focus(); el.select && el.select(); } }
@@ -2746,7 +2747,7 @@ function rHonorHtml(theme, real=false){
       <div><div class="t2"><span class="a">${esc(HO.t2a || nm)}</span>${esc(HO.t2b || "내신우수")}</div></div></div>
     <div class="ribbon"><span class="ln"></span><span class="bd">${esc(HO.t3 || `${S.year}학년도 ${R.sem}학기 ${R.term}고사`)}</span><span class="ln"></span></div>
     <div class="cols"${groups.length === 1 ? ' style="grid-template-columns:minmax(0,600px);justify-content:center"' : ""}>${cols.filter((c) => c.length).map((c) => `<div>${c.map(([k, v]) => `<div class="grp"><div class="gh">${k}</div>${v.map((r) => `<div class="gr"><span>${esc(r.level === "고" ? r.school_name + r.grade : r.school_name)}</span><span>${esc(real ? rDisp(r) : maskName(r.student_name))}</span><span>${f1(Number(r.score))}</span></div>`).join("")}</div>`).join("")}</div>`).join("")}</div>
-    <div class="foot"><span>${esc(nm)} · ${esc(S.subject)}</span><span>${HO.cut >= 100 ? "만점자" : `${HO.cut}점 이상`}</span></div>
+    <div class="foot"><span>${esc(nm)}</span></div>
   </div>`;
 }
 function rRenderHonor(){
